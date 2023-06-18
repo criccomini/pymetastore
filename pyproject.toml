@@ -1,0 +1,18 @@
+
+[project]
+name = "pymetastore"
+version = "0.1.0"
+description = "A Python client for the Thrift interface to Hive Metastore"
+authors = [
+    {name = "Chris Riccomini", email = "criccomini@apache.org"},
+]
+dependencies = [
+    "thrift>=0.16.0",
+]
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
