@@ -5,6 +5,7 @@ from thrift.transport import TTransport, TSocket
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from hms.ttypes import *
 from hms import ThriftHiveMetastore as hms
+
 class HPrincipalType(Enum):
     ROLE = "ROLE"
     USER = "USER"
