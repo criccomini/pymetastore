@@ -11,6 +11,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      hive-metastore:
+        image: ghcr.io/criccomini/hive-metastore-standalone:latest
+        ports:
+          - 9083:9083
+
     strategy:
       matrix:
         python-version: ['3.8']
@@ -30,11 +36,15 @@ jobs:
         pip install pdm
         pdm install
 
-    - name: Run black and isort
+    - name: Run black
       run: |
         source venv/bin/activate
-        pdm run isort --check --diff pymetastore/ tests/
         pdm run black --check --diff pymetastore/ tests/
+
+    - name: Run isort
+      run: |
+        source venv/bin/activate
+        pdm run isort pymetastore/ tests --check-only --diff
 
     - name: Run pylint
       run: |
@@ -46,7 +56,12 @@ jobs:
         source venv/bin/activate
         pdm run pyright
 
-    - name: Test with pytest
+    - name: Run unit tests
       run: |
         source venv/bin/activate
-        pdm run pytest
+        pdm run pytest tests/unit
+
+    - name: Run integration tests
+      run: |
+        source venv/bin/activate
+        pdm run pytest tests/integration

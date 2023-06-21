@@ -1,11 +1,12 @@
 from enum import Enum
 from typing import Dict, List, Optional
 
-from hms import ThriftHiveMetastore as hms
-from hms.ttypes import *
-from htypes import HType
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
+
+from .hms import ThriftHiveMetastore as hms
+from .hms.ttypes import *
+from .htypes import HType
 
 
 class HPrincipalType(Enum):
@@ -99,25 +100,25 @@ class HTable:
 
 
 class HMS:
-    def __init__(self, host="localhost", port=9090):
-        self.host = host
-        self.port = port
-        self.socket = TSocket.TSocket(self.host, self.port)
-        self.transport = TTransport.TBufferedTransport(self.socket)
-        self.protocol = TBinaryProtocol(self.transport)
-        self.client = hms.Client(self.protocol)
+    def __init__(self, client: hms.Client):
+        self.client = client
 
-    def connect(self):
-        self.transport.open()
-
-    def disconnect(self):
-        self.transport.close()
+    @staticmethod
+    def create(host="localhost", port=9083):
+        host = host
+        port = port
+        socket = TSocket.TSocket(host, port)
+        transport = TTransport.TBufferedTransport(socket)
+        protocol = TBinaryProtocol(transport)
+        transport.open()
+        yield hms.Client(protocol)
+        transport.close()
 
     def list_databases(self) -> List[str]:
         databases = self.client.get_all_databases()
         db_names = []
         for database in databases:
-            db_names.append(database.name)
+            db_names.append(database)
         return db_names
 
     def get_database(self, name: str) -> HDatabase:
