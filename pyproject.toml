@@ -5,11 +5,12 @@ version = "0.1.0"
 description = "A Python client for the Thrift interface to Hive Metastore"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
+    {name = "Kostas Pardalis"},
 ]
 dependencies = [
     "thrift>=0.16.0",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
 
@@ -20,4 +21,33 @@ build-backend = "pdm.backend"
 [tool.pdm.dev-dependencies]
 test = [
     "pytest>=7.3.2",
+]
+style = [
+    "black>=23.3.0",
+    "isort>=5.11.5",
+    "pylint>=2.13.9",
+    "pyright>=1.1.315",
+]
+
+[tool.black]
+exclude = "pymetastore/hms/"
+
+[tool.isort]
+profile = "black"
+case_sensitive = true
+skip_glob = ["pymetastore/hms/*"]
+
+[tool.pylint.master]
+ignore = "pymetastore/hms"
+fail-under = 7
+
+[tool.pylint.messages_control]
+max-line-length = 110
+
+[tool.pyright]
+include = ["pymetastore/"]
+pythonPlatform = "All"
+exclude = [
+    "**/__pycache__",
+    "pymetastore/hms"
 ]
