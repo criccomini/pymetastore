@@ -1,6 +1,7 @@
 from typing import List, Any
 from collections import namedtuple
 from enum import Enum
+import pprint
 
 class PrimitiveCategory(Enum):
     VOID = "VOID"
@@ -149,22 +150,23 @@ primitive_to_serde_mapping = {
 }
 
 # We also need the inverse though. 
-serde_to_primitive_mapping = {v: k for k, v in primitive_to_serde_mapping.items()}
+serde_to_primitive_mapping = {v.name: k for k, v in primitive_to_serde_mapping.items()}
 
 # This function gets us the serde type name from the primitive one.
 def primitive_to_serde(primitive_category: PrimitiveCategory) -> SerdeTypeNameConstants:
-    return primitive_to_serde_mapping[primitive_category]
+    primitive_to_serde_mapping.get(primitive_category)
+    return primitive_to_serde_mapping.get(primitive_category)
 
 # This function gets us the primitive type name from the serde one.
-def serde_to_primitive(serde_type_name: SerdeTypeNameConstants) -> PrimitiveCategory:
-    return serde_to_primitive_mapping[serde_type_name]
+def serde_to_primitive(serde_type_name: str) -> PrimitiveCategory:
+    return serde_to_primitive_mapping.get(serde_type_name)
 
 # We also need a way to get the serde enum key from the string we get from Thrift.
 def get_serde_type_by_value(value):
     for member in SerdeTypeNameConstants:
         if member.value == value:
             return member.name
-    raise ValueError(f"{value} not found in {SerdeTypeNameConstants.__name__}")
+    return None
 
 # To be used for tokening the Thrift type string. We need to tokenize the string to get the type name and the type parameters.
 class Token(namedtuple('Token', ['position', 'text', 'type'])):
@@ -238,7 +240,7 @@ class TypeParser:
     
     def peek(self) -> Token:
         if self.index >= len(self.type_tokens):
-            raise ValueError("Error: Unexpected end of 'typeInfoString'")
+            return None
         return self.type_tokens[self.index]
 
     def expect(self, item: str, alternative: str = None) -> Token:
@@ -246,18 +248,18 @@ class TypeParser:
             raise ValueError(f"Error: {item} expected at the end of 'typeInfoString'")
 
         token = self.type_tokens[self.index]
-
+        
         if item == "type":
-            if token.text() not in [SerdeTypeNameConstants.LIST.value,
-                                SerdeTypeNameConstants.MAP.value,
-                                SerdeTypeNameConstants.STRUCT.value,
-                                SerdeTypeNameConstants.UNION.value] and (self.get_base_name(token.text()) is None) and (token.text() != alternative):
-                raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
+            if token.text not in [HTypeCategory.LIST.value,
+                                HTypeCategory.MAP.value,
+                                HTypeCategory.STRUCT.value,
+                                HTypeCategory.UNION.value] and (self.get_base_name(token.text) is None) and (token.text != alternative):
+                raise ValueError(f"Error: {item} expected at the position {token.position} of 'typeInfoString' but '{token.text}' is found.")
         elif item == "name":
-            if not token.type() and token.text() != alternative:
-                raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
-        elif item != token.text() and token.text() != alternative:
-            raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
+            if not token.type and token.text != alternative:
+                raise ValueError(f"Error: {item} expected at the position {token.position} of 'typeInfoString' but '{token.text}' is found.")
+        elif item != token.text and token.text != alternative:
+            raise ValueError(f"Error: {item} expected at the position {token.position} of 'typeInfoString' but '{token.text}' is found.")
 
         self.index += 1 # increment the index
         return token
@@ -265,14 +267,14 @@ class TypeParser:
     def parse_params(self) -> List[str]:
         params = []
 
-        token = self.peek(self.type_tokens, index)
-        if token is not None and token.text() == "(":
-            token, index = self.expect("(", None, self.type_tokens, index)
-            token = self.peek(self.type_tokens, index)
-            while token is None or token.text() != ")":
-                token, index = self.expect("name", None, self.type_tokens, index)
-                params.append(token.text())
-                token, index = self.expect(",", ")", self.type_tokens, index)
+        token: Token = self.peek()
+        if token is not None and token.text == "(":
+            token = self.expect("(", None)
+            token = self.peek()
+            while token is None or token.text != ")":
+                token = self.expect("name", None)
+                params.append(token.text)
+                token = self.expect(",", ")")
 
             if not params:
                 raise ValueError("type parameters expected for type string 'typeInfoString'")
@@ -283,12 +285,12 @@ class TypeParser:
         token: Token = self.expect("type")
 
         # first we take care of primitive types.
-        serde_val = get_serde_type_by_value(token.text())
-        if serde_val is not None:
+        serde_val = get_serde_type_by_value(token.text)
+        if serde_val not in (HTypeCategory.LIST.value, HTypeCategory.MAP.value, HTypeCategory.STRUCT.value, HTypeCategory.UNION.value):
             primitive_type = serde_to_primitive(serde_val)
             if primitive_type is not PrimitiveCategory.UNKNOWN:
                 params = self.parse_params()
-                if primitive_type is PrimitiveCategory.CHAR or PrimitiveCategory.VARCHAR:
+                if primitive_type in (PrimitiveCategory.CHAR, PrimitiveCategory.VARCHAR):
                     if len(params) == 0:
                         raise ValueError("char/varchar type must have a length specified")
                     if len(params) == 1:
@@ -298,7 +300,7 @@ class TypeParser:
                         elif primitive_type is PrimitiveCategory.VARCHAR:
                             return HVarcharType(length)
                     else: 
-                        raise ValueError(f"Error: {token.text()} type takes only one parameter, but instead {len(params)} parameters are found.")
+                        raise ValueError(f"Error: {token.text} type takes only one parameter, but instead {len(params)} parameters are found.")
                 elif primitive_type is PrimitiveCategory.DECIMAL:
                     if len(params) == 0:
                         return HDecimalType(10, 0)
@@ -310,18 +312,19 @@ class TypeParser:
                         scale = int(params[1])
                         return HDecimalType(precision, scale)
                     else:
-                        raise ValueError(f"Error: {token.text()} type takes only two parameters, but instead {len(params)} parameters are found.")
+                        raise ValueError(f"Error: {token.text} type takes only two parameters, but instead {len(params)} parameters are found.")
                 else:
+                    
                     return HPrimitiveType(primitive_type)
         
         # next we take care of complex types.
-        if SerdeTypeNameConstants.LIST.value == token.text():
+        if HTypeCategory.LIST.value == serde_val:
             self.expect("<")
             element_type = self.parse_type()
             self.expect(">")
             return HListType(element_type)
         
-        if SerdeTypeNameConstants.MAP.value == token.text():
+        if HTypeCategory.MAP.value == serde_val:
             self.expect("<")
             key_type = self.parse_type()
             self.expect(",")
@@ -329,37 +332,41 @@ class TypeParser:
             self.expect(">")
             return HMapType(key_type, value_type)
         
-        if SerdeTypeNameConstants.STRUCT.value == token.text():
+        if HTypeCategory.STRUCT.value == serde_val:
             self.expect("<")
             names = []
             types = []
             token = self.peek()
-            while token is not None and token.text() != ">":
+            while token is not None and token.text != ">":
                 field_name = self.expect("name")
                 self.expect(":")
                 field_type = self.parse_type()
-                names.append(field_name)
+                names.append(field_name.text)
                 types.append(field_type)
                 token = self.peek()
-                if token.text() == ",":
+                if token.text == ",":
                     self.expect(",")
                     token = self.peek()
             self.expect(">")
             return HStructType(names, types)
         
-        if SerdeTypeNameConstants.UNION.value == token.text():
+        if HTypeCategory.UNION.value == serde_val:
             self.expect("<")
             types = []
             token = self.peek()
-            while token is not None and token.text() != ">":
+            while token is not None and token.text != ">":
                 field_type = self.parse_type()
                 types.append(field_type)
                 token = self.peek()
-                if token.text() == ",":
+                if token.text == ",":
                     self.expect(",")
                     token = self.peek()
             self.expect(">")
             return HUnionType(types)
         
         # if we reach this point and we haven't figure out what to do, then we better raise an error.
-        raise ValueError(f"Error: {token.text()} is not a valid type.")
+        raise ValueError(f"Error: {token.text} is not a valid type.")
+    
+
+parser = TypeParser("struct<name:string,age:int>")
+ptype:HStructType = parser.parse_type()
