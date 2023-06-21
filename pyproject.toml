@@ -29,6 +29,9 @@ style = [
     "pyright>=1.1.315",
 ]
 
+[tool.pdm.scripts]
+thrift = "thrift -r --gen py --out pymetastore static/hms.thrift"
+
 [tool.black]
 exclude = "pymetastore/hms/"
 
