@@ -31,6 +31,9 @@ style = [
 
 [tool.pdm.scripts]
 thrift = "thrift -r --gen py --out pymetastore static/hms.thrift"
+black = "black pymetastore/ tests/"
+isort = "isort pymetastore/ tests/"
+style = {composite = ["black", "isort"]}
 
 [tool.black]
 exclude = "pymetastore/hms/"
@@ -53,4 +56,9 @@ pythonPlatform = "All"
 exclude = [
     "**/__pycache__",
     "pymetastore/hms"
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as an integration test",
 ]
