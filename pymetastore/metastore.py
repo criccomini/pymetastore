@@ -12,7 +12,21 @@ from .htypes import HType
 class HPrincipalType(Enum):
     ROLE = "ROLE"
     USER = "USER"
+    GROUP = "GROUP"
 
+class HPrivilegeGrantInfo:
+    def __init__(self, privilege: str, grantor: str, grantor_type: HPrincipalType, create_time: int, grant_option: bool):
+        self.privilege = privilege
+        self.grantor = grantor
+        self.grantor_type = grantor_type
+        self.create_time = create_time
+        self.grant_option = grant_option
+
+class HPrincipalPrivilegeSet:
+    def __init__(self, user_privileges: List[HPrivilegeGrantInfo], group_privileges: List[HPrivilegeGrantInfo], role_privileges: List[HPrivilegeGrantInfo]):
+        self.user_privileges = user_privileges
+        self.group_privileges = group_privileges
+        self.role_privileges = role_privileges
 
 class HDatabase:
     def __init__(
@@ -117,6 +131,31 @@ class HTable:
         self.write_id = write_id
         self.owner = owner
 
+class HPartition:
+    def __init__(self, 
+                 database_name: str, 
+                 table_name: str, 
+                 values: List[str], 
+                 storage: HStorage, 
+                 parameters: Dict[str, str], 
+                 create_time: int, 
+                 last_access_time: int, 
+                 sd: HStorage,
+                 privilege_set: HPrincipalPrivilegeSet = None,
+                 cat_name: str = None,
+                 write_id: int = None
+                 ):
+        self.database_name = database_name
+        self.table_name = table_name
+        self.values = values
+        self.storage = storage
+        self.parameters = parameters
+        self.create_time = create_time
+        self.last_access_time = last_access_time
+        self.sd = sd
+        self.privilege_set = privilege_set
+        self.cat_name = cat_name
+        self.write_id = write_id
 
 class HMS:
     def __init__(self, client: hms.Client):
@@ -202,7 +241,7 @@ class HMS:
             version = BucketingVersion.V1
             if table.parameters.get("TABLE_BUCKETING_VERSION", BucketingVersion.V1) == BucketingVersion.V2:
                version = BucketingVersion.V2
-               
+
             bucket_property = HiveBucketProperty(table.sd.bucketCols, table.sd.numBuckets, version, sort_cols)
 
         storage = HStorage(storage_format, table.sd.skewedInfo is not None, table.sd.location, bucket_property, table.sd.serdeInfo.parameters)
