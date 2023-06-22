@@ -39,11 +39,30 @@ class HColumn:
         self.comment = comment
 
 
-# TODO: Implement
+class HSortingOrder(Enum):
+    ASC = 1
+    DESC = 0
+
+class HSortingColumn:
+    def __init__(self, order: HSortingOrder):
+        self.column_name = order.col
+        
+        if order.order == HSortingOrder.ASC:
+            self.order = HSortingOrder.ASC
+        else:
+            self.order = HSortingOrder.DESC
+
+
+class BucketingVersion(Enum):
+    V1 = 1
+    V2 = 2
+
 class HiveBucketProperty:
-    def __init__(self):
-        # TODO!!
-        pass
+    def __init__(self, bucketed_by: List[str], bucket_count: int, version: BucketingVersion = None, sorting_columns: List[HSortingColumn] = None):
+        self.bucketed_by = bucketed_by
+        self.bucket_count = bucket_count
+        self.version = version
+        self.sorting_columns = sorting_columns
 
 
 class StorageFormat:
@@ -166,14 +185,38 @@ class HMS:
             type_parser = TypeParser(column.type)
             columns.append(HColumn(column.name, type_parser.parse(), column.comment))
         
-        
+        partition_columns = []
         for column in table.partitionKeys:
             type_parser = TypeParser(column.type)
-            columns.append(HColumn(column.name, type_parser.parse(), column.comment))
+            partition_columns.append(HColumn(column.name, type_parser.parse(), column.comment))
         
         storage_format = StorageFormat(table.sd.serdeInfo.serializationLib, table.sd.inputFormat, table.sd.outputFormat)
-        storage = HStorage(storage_format, table.sd.skewedInfo is not None, table.sd.location, None, table.sd.serdeInfo.parameters)
-        return HTable(table.dbName, table.tableName, table.tableType, columns, [], storage, table.parameters, table.viewOriginalText, table.viewExpandedText, table.writeId, table.owner)
+        
+
+        bucket_property = None
+        if table.sd.bucketCols is not None:
+            sort_cols = []
+            for col in table.sd.sortCols:
+                sort_cols.append(HSortingColumn(col))
+
+            version = BucketingVersion.V1
+            if table.parameters.get("TABLE_BUCKETING_VERSION", BucketingVersion.V1) == BucketingVersion.V2:
+               version = BucketingVersion.V2
+               
+            bucket_property = HiveBucketProperty(table.sd.bucketCols, table.sd.numBuckets, version, sort_cols)
+
+        storage = HStorage(storage_format, table.sd.skewedInfo is not None, table.sd.location, bucket_property, table.sd.serdeInfo.parameters)
+        
+        return HTable(table.dbName, 
+                      table.tableName, 
+                      table.tableType, 
+                      columns, 
+                      partition_columns, 
+                      storage, 
+                      table.parameters, 
+                      table.viewOriginalText, 
+                      table.viewExpandedText, 
+                      table.writeId, table.owner)
 
             
 
