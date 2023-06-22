@@ -4,8 +4,8 @@ import pytest
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
-from pymetastore.hms import ttypes
-from pymetastore.hms.ThriftHiveMetastore import Client
+from pymetastore.hive_metastore import ttypes
+from pymetastore.hive_metastore.ThriftHiveMetastore import Client
 from pymetastore.metastore import HMS
 
 

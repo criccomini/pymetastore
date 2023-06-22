@@ -4,8 +4,8 @@ from typing import Dict, List, Optional
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
-from .hms import ThriftHiveMetastore as hms
-from .hms.ttypes import *
+from .hive_metastore import ThriftHiveMetastore as hms
+from .hive_metastore.ttypes import *
 from .htypes import HType
 
 
