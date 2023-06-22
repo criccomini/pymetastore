@@ -135,8 +135,7 @@ class HPartition:
     def __init__(self, 
                  database_name: str, 
                  table_name: str, 
-                 values: List[str], 
-                 storage: HStorage, 
+                 values: List[str],
                  parameters: Dict[str, str], 
                  create_time: int, 
                  last_access_time: int, 
@@ -148,7 +147,6 @@ class HPartition:
         self.database_name = database_name
         self.table_name = table_name
         self.values = values
-        self.storage = storage
         self.parameters = parameters
         self.create_time = create_time
         self.last_access_time = last_access_time
@@ -217,17 +215,47 @@ class HMS:
             column_names.append(column.name)
         return column_names
     
+    def list_partitions(self, databaseName: str, tableName: str, max_parts: int = -1) -> List[str]:
+        partitions = self.client.get_partition_names(databaseName, tableName, max_parts)
+        return partitions
+    
+    def get_partition(self, databaseName: str, tableName: str, partition_name: str) -> HPartition:
+        
+        partition: Partition = self.client.get_partition_by_name(databaseName, tableName, partition_name)
+        
+        storage_format = StorageFormat(partition.sd.serdeInfo.serializationLib, partition.sd.inputFormat, partition.sd.outputFormat)
+        bucket_property = HiveBucketProperty(partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols)
+        sd = HStorage(storage_format,partition.sd.skewedInfo, partition.sd.location, bucket_property, partition.sd.serdeInfo.parameters) 
+        
+        result_partition = HPartition(partition.dbName, 
+                                      partition.tableName, 
+                                      partition.values, 
+                                      partition.parameters, 
+                                      partition.createTime, 
+                                      partition.lastAccessTime, 
+                                      sd, 
+                                      partition.privileges, 
+                                      partition.catName, 
+                                      partition.writeId)
+        return result_partition
+
     def get_table(self, databaseName: str, tableName: str) -> HTable:
         table: Table = self.client.get_table(databaseName, tableName)
         columns = []
-        for column in table.sd.cols:
-            type_parser = TypeParser(column.type)
-            columns.append(HColumn(column.name, type_parser.parse(), column.comment))
+
+        t_columns: List[FieldSchema] = table.sd.cols
         
-        partition_columns = []
-        for column in table.partitionKeys:
+        for column in t_columns:
             type_parser = TypeParser(column.type)
-            partition_columns.append(HColumn(column.name, type_parser.parse(), column.comment))
+    
+            columns.append(HColumn(column.name, type_parser.parse_type(), column.comment))
+        
+        t_part_columns: List[FieldSchema] = table.partitionKeys
+
+        partition_columns = []
+        for column in t_part_columns:
+            type_parser = TypeParser(column.type)
+            partition_columns.append(HColumn(column.name, type_parser.parse_type(), column.comment))
         
         storage_format = StorageFormat(table.sd.serdeInfo.serializationLib, table.sd.inputFormat, table.sd.outputFormat)
         
