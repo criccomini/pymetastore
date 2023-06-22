@@ -219,6 +219,31 @@ class HMS:
         partitions = self.client.get_partition_names(databaseName, tableName, max_parts)
         return partitions
     
+    def get_partitions(self, databaseName: str, tableName: str, max_parts: int = -1) -> List[HPartition]:
+        partitions: List[Partition] = self.client.get_partitions(databaseName, tableName, max_parts)
+        result_partitions = []
+        
+        for partition in partitions:
+            storage_format = StorageFormat(partition.sd.serdeInfo.serializationLib, partition.sd.inputFormat, partition.sd.outputFormat)
+            bucket_property = HiveBucketProperty(partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols)
+            sd = HStorage(storage_format,partition.sd.skewedInfo, partition.sd.location, bucket_property, partition.sd.serdeInfo.parameters) 
+            
+            result_partition = HPartition(partition.dbName, 
+                                          partition.tableName, 
+                                          partition.values, 
+                                          partition.parameters, 
+                                          partition.createTime, 
+                                          partition.lastAccessTime, 
+                                          sd, 
+                                          partition.privileges, 
+                                          partition.catName, 
+                                          partition.writeId)
+            
+            result_partitions.append(result_partition)
+        
+        return result_partitions
+    
+
     def get_partition(self, databaseName: str, tableName: str, partition_name: str) -> HPartition:
         
         partition: Partition = self.client.get_partition_by_name(databaseName, tableName, partition_name)
