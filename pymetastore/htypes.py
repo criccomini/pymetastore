@@ -2,35 +2,6 @@ from collections import namedtuple
 from enum import Enum
 from typing import Any, List, Optional
 
-
-#                                                                                         
-#                                                    ╔══════════════╗                        
-#                                                    ║              ║                        
-#                                              ┌─────║  HListType   ║                        
-#                                              │     ║              ║                        
-#                                              │     ╚══════════════╝                        
-#                                              │     ╔══════════════╗        ╔══════════════╗
-#                                              │     ║              ║        ║              ║
-#                                              ├─────║   HMapType   ║   ┌────║  HCharType   ║
-#                                              │     ║              ║   │    ║              ║
-#                                              │     ╚══════════════╝   │    ╚══════════════╝
-#                          ╔══════════════╗    │     ╔══════════════╗   │    ╔══════════════╗
-#                          ║              ║    │     ║              ║   │    ║              ║
-#                          ║    HType     ║────┼─────║HPrimitiveType║───┼────╣ HVarCharType ║
-#                          ║              ║    │     ║              ║   │    ║              ║
-#                          ╚══════════════╝    │     ╚══════════════╝   │    ╚══════════════╝
-#                                              │     ╔══════════════╗   │    ╔══════════════╗
-#                                              │     ║              ║   │    ║              ║
-#                                              ├─────║  HUnionType  ║   └────║ HDecimalType ║
-#                                              │     ║              ║        ║              ║
-#                                              │     ╚══════════════╝        ╚══════════════╝
-#                                              │     ╔══════════════╗                        
-#                                              │     ║              ║                        
-#                                              └─────║ HStructType  ║                        
-#                                                    ║              ║                        
-#                                                    ╚══════════════╝                        
-#
-#
 class PrimitiveCategory(Enum):
     VOID = "VOID"
     BOOLEAN = "BOOLEAN"
