@@ -158,3 +158,25 @@ class HMS:
         for column in columns:  # pyright: ignore[reportOptionalIterable]
             column_names.append(column.name)
         return column_names
+    
+    def get_table(self, databaseName: str, tableName: str) -> HTable:
+        table: Table = self.client.get_table(databaseName, tableName)
+        columns = []
+        for column in table.sd.cols:
+            type_parser = TypeParser(column.type)
+            columns.append(HColumn(column.name, type_parser.parse(), column.comment))
+        
+        
+        for column in table.partitionKeys:
+            type_parser = TypeParser(column.type)
+            columns.append(HColumn(column.name, type_parser.parse(), column.comment))
+        
+        storage_format = StorageFormat(table.sd.serdeInfo.serializationLib, table.sd.inputFormat, table.sd.outputFormat)
+        storage = HStorage(storage_format, table.sd.skewedInfo is not None, table.sd.location, None, table.sd.serdeInfo.parameters)
+        return HTable(table.dbName, table.tableName, table.tableType, columns, [], storage, table.parameters, table.viewOriginalText, table.viewExpandedText, table.writeId, table.owner)
+
+            
+
+            
+            
+        
