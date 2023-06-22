@@ -2,6 +2,7 @@ from collections import namedtuple
 from enum import Enum
 from typing import Any, List, Optional
 
+
 class PrimitiveCategory(Enum):
     VOID = "VOID"
     BOOLEAN = "BOOLEAN"

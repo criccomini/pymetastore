@@ -14,19 +14,34 @@ class HPrincipalType(Enum):
     USER = "USER"
     GROUP = "GROUP"
 
+
 class HPrivilegeGrantInfo:
-    def __init__(self, privilege: str, grantor: str, grantor_type: HPrincipalType, create_time: int, grant_option: bool):
+    def __init__(
+        self,
+        privilege: str,
+        grantor: str,
+        grantor_type: HPrincipalType,
+        create_time: int,
+        grant_option: bool,
+    ):
         self.privilege = privilege
         self.grantor = grantor
         self.grantor_type = grantor_type
         self.create_time = create_time
         self.grant_option = grant_option
 
+
 class HPrincipalPrivilegeSet:
-    def __init__(self, user_privileges: List[HPrivilegeGrantInfo], group_privileges: List[HPrivilegeGrantInfo], role_privileges: List[HPrivilegeGrantInfo]):
+    def __init__(
+        self,
+        user_privileges: List[HPrivilegeGrantInfo],
+        group_privileges: List[HPrivilegeGrantInfo],
+        role_privileges: List[HPrivilegeGrantInfo],
+    ):
         self.user_privileges = user_privileges
         self.group_privileges = group_privileges
         self.role_privileges = role_privileges
+
 
 class HDatabase:
     def __init__(
@@ -57,10 +72,11 @@ class HSortingOrder(Enum):
     ASC = 1
     DESC = 0
 
+
 class HSortingColumn:
     def __init__(self, order: HSortingOrder):
         self.column_name = order.col
-        
+
         if order.order == HSortingOrder.ASC:
             self.order = HSortingOrder.ASC
         else:
@@ -71,8 +87,15 @@ class BucketingVersion(Enum):
     V1 = 1
     V2 = 2
 
+
 class HiveBucketProperty:
-    def __init__(self, bucketed_by: List[str], bucket_count: int, version: BucketingVersion = None, sorting_columns: List[HSortingColumn] = None):
+    def __init__(
+        self,
+        bucketed_by: List[str],
+        bucket_count: int,
+        version: BucketingVersion = None,
+        sorting_columns: List[HSortingColumn] = None,
+    ):
         self.bucketed_by = bucketed_by
         self.bucket_count = bucket_count
         self.version = version
@@ -131,19 +154,21 @@ class HTable:
         self.write_id = write_id
         self.owner = owner
 
+
 class HPartition:
-    def __init__(self, 
-                 database_name: str, 
-                 table_name: str, 
-                 values: List[str],
-                 parameters: Dict[str, str], 
-                 create_time: int, 
-                 last_access_time: int, 
-                 sd: HStorage,
-                 privilege_set: HPrincipalPrivilegeSet = None,
-                 cat_name: str = None,
-                 write_id: int = None
-                 ):
+    def __init__(
+        self,
+        database_name: str,
+        table_name: str,
+        values: List[str],
+        parameters: Dict[str, str],
+        create_time: int,
+        last_access_time: int,
+        sd: HStorage,
+        privilege_set: HPrincipalPrivilegeSet = None,
+        cat_name: str = None,
+        write_id: int = None,
+    ):
         self.database_name = database_name
         self.table_name = table_name
         self.values = values
@@ -154,6 +179,7 @@ class HPartition:
         self.privilege_set = privilege_set
         self.cat_name = cat_name
         self.write_id = write_id
+
 
 class HMS:
     def __init__(self, client: hms.Client):
@@ -214,54 +240,90 @@ class HMS:
         for column in columns:  # pyright: ignore[reportOptionalIterable]
             column_names.append(column.name)
         return column_names
-    
-    def list_partitions(self, databaseName: str, tableName: str, max_parts: int = -1) -> List[str]:
+
+    def list_partitions(
+        self, databaseName: str, tableName: str, max_parts: int = -1
+    ) -> List[str]:
         partitions = self.client.get_partition_names(databaseName, tableName, max_parts)
         return partitions
-    
-    def get_partitions(self, databaseName: str, tableName: str, max_parts: int = -1) -> List[HPartition]:
-        partitions: List[Partition] = self.client.get_partitions(databaseName, tableName, max_parts)
-        result_partitions = []
-        
-        for partition in partitions:
-            storage_format = StorageFormat(partition.sd.serdeInfo.serializationLib, partition.sd.inputFormat, partition.sd.outputFormat)
-            bucket_property = HiveBucketProperty(partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols)
-            sd = HStorage(storage_format,partition.sd.skewedInfo, partition.sd.location, bucket_property, partition.sd.serdeInfo.parameters) 
-            
-            result_partition = HPartition(partition.dbName, 
-                                          partition.tableName, 
-                                          partition.values, 
-                                          partition.parameters, 
-                                          partition.createTime, 
-                                          partition.lastAccessTime, 
-                                          sd, 
-                                          partition.privileges, 
-                                          partition.catName, 
-                                          partition.writeId)
-            
-            result_partitions.append(result_partition)
-        
-        return result_partitions
-    
 
-    def get_partition(self, databaseName: str, tableName: str, partition_name: str) -> HPartition:
-        
-        partition: Partition = self.client.get_partition_by_name(databaseName, tableName, partition_name)
-        
-        storage_format = StorageFormat(partition.sd.serdeInfo.serializationLib, partition.sd.inputFormat, partition.sd.outputFormat)
-        bucket_property = HiveBucketProperty(partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols)
-        sd = HStorage(storage_format,partition.sd.skewedInfo, partition.sd.location, bucket_property, partition.sd.serdeInfo.parameters) 
-        
-        result_partition = HPartition(partition.dbName, 
-                                      partition.tableName, 
-                                      partition.values, 
-                                      partition.parameters, 
-                                      partition.createTime, 
-                                      partition.lastAccessTime, 
-                                      sd, 
-                                      partition.privileges, 
-                                      partition.catName, 
-                                      partition.writeId)
+    def get_partitions(
+        self, databaseName: str, tableName: str, max_parts: int = -1
+    ) -> List[HPartition]:
+        partitions: List[Partition] = self.client.get_partitions(
+            databaseName, tableName, max_parts
+        )
+        result_partitions = []
+
+        for partition in partitions:
+            storage_format = StorageFormat(
+                partition.sd.serdeInfo.serializationLib,
+                partition.sd.inputFormat,
+                partition.sd.outputFormat,
+            )
+            bucket_property = HiveBucketProperty(
+                partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols
+            )
+            sd = HStorage(
+                storage_format,
+                partition.sd.skewedInfo,
+                partition.sd.location,
+                bucket_property,
+                partition.sd.serdeInfo.parameters,
+            )
+
+            result_partition = HPartition(
+                partition.dbName,
+                partition.tableName,
+                partition.values,
+                partition.parameters,
+                partition.createTime,
+                partition.lastAccessTime,
+                sd,
+                partition.privileges,
+                partition.catName,
+                partition.writeId,
+            )
+
+            result_partitions.append(result_partition)
+
+        return result_partitions
+
+    def get_partition(
+        self, databaseName: str, tableName: str, partition_name: str
+    ) -> HPartition:
+        partition: Partition = self.client.get_partition_by_name(
+            databaseName, tableName, partition_name
+        )
+
+        storage_format = StorageFormat(
+            partition.sd.serdeInfo.serializationLib,
+            partition.sd.inputFormat,
+            partition.sd.outputFormat,
+        )
+        bucket_property = HiveBucketProperty(
+            partition.sd.bucketCols, partition.sd.numBuckets, partition.sd.sortCols
+        )
+        sd = HStorage(
+            storage_format,
+            partition.sd.skewedInfo,
+            partition.sd.location,
+            bucket_property,
+            partition.sd.serdeInfo.parameters,
+        )
+
+        result_partition = HPartition(
+            partition.dbName,
+            partition.tableName,
+            partition.values,
+            partition.parameters,
+            partition.createTime,
+            partition.lastAccessTime,
+            sd,
+            partition.privileges,
+            partition.catName,
+            partition.writeId,
+        )
         return result_partition
 
     def get_table(self, databaseName: str, tableName: str) -> HTable:
@@ -269,21 +331,28 @@ class HMS:
         columns = []
 
         t_columns: List[FieldSchema] = table.sd.cols
-        
+
         for column in t_columns:
             type_parser = TypeParser(column.type)
-    
-            columns.append(HColumn(column.name, type_parser.parse_type(), column.comment))
-        
+
+            columns.append(
+                HColumn(column.name, type_parser.parse_type(), column.comment)
+            )
+
         t_part_columns: List[FieldSchema] = table.partitionKeys
 
         partition_columns = []
         for column in t_part_columns:
             type_parser = TypeParser(column.type)
-            partition_columns.append(HColumn(column.name, type_parser.parse_type(), column.comment))
-        
-        storage_format = StorageFormat(table.sd.serdeInfo.serializationLib, table.sd.inputFormat, table.sd.outputFormat)
-        
+            partition_columns.append(
+                HColumn(column.name, type_parser.parse_type(), column.comment)
+            )
+
+        storage_format = StorageFormat(
+            table.sd.serdeInfo.serializationLib,
+            table.sd.inputFormat,
+            table.sd.outputFormat,
+        )
 
         bucket_property = None
         if table.sd.bucketCols is not None:
@@ -292,26 +361,34 @@ class HMS:
                 sort_cols.append(HSortingColumn(col))
 
             version = BucketingVersion.V1
-            if table.parameters.get("TABLE_BUCKETING_VERSION", BucketingVersion.V1) == BucketingVersion.V2:
-               version = BucketingVersion.V2
+            if (
+                table.parameters.get("TABLE_BUCKETING_VERSION", BucketingVersion.V1)
+                == BucketingVersion.V2
+            ):
+                version = BucketingVersion.V2
 
-            bucket_property = HiveBucketProperty(table.sd.bucketCols, table.sd.numBuckets, version, sort_cols)
+            bucket_property = HiveBucketProperty(
+                table.sd.bucketCols, table.sd.numBuckets, version, sort_cols
+            )
 
-        storage = HStorage(storage_format, table.sd.skewedInfo is not None, table.sd.location, bucket_property, table.sd.serdeInfo.parameters)
-        
-        return HTable(table.dbName, 
-                      table.tableName, 
-                      table.tableType, 
-                      columns, 
-                      partition_columns, 
-                      storage, 
-                      table.parameters, 
-                      table.viewOriginalText, 
-                      table.viewExpandedText, 
-                      table.writeId, table.owner)
+        storage = HStorage(
+            storage_format,
+            table.sd.skewedInfo is not None,
+            table.sd.location,
+            bucket_property,
+            table.sd.serdeInfo.parameters,
+        )
 
-            
-
-            
-            
-        
+        return HTable(
+            table.dbName,
+            table.tableName,
+            table.tableType,
+            columns,
+            partition_columns,
+            storage,
+            table.parameters,
+            table.viewOriginalText,
+            table.viewExpandedText,
+            table.writeId,
+            table.owner,
+        )
