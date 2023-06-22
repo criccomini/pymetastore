@@ -19,7 +19,7 @@ from pymetastore.htypes import (
 # Although type systems change, it is a rare event and even if it happens, we
 # should be very careful as way too many things can break. For this reason
 # we'll be testing values and members for the types we define to catch any
-# changes. For this reason we'll be primarily be testing the values and not the
+# changes. We'll be primarily be testing the values and not the
 # utility functions for the conversion between types. These functions are
 # trivial and they primarily expose a thin API over the mappings we define.
 
