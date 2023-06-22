@@ -1,0 +1,3 @@
+[submodule "vendor/hive-thrift"]
+	path = vendor/hive-thrift
+	url = https://github.com/trinodb/hive-thrift.git

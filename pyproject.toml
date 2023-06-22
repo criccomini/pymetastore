@@ -30,21 +30,21 @@ style = [
 ]
 
 [tool.pdm.scripts]
-thrift = "thrift -r --gen py --out pymetastore static/hms.thrift"
+thrift = "thrift -r --gen py --out pymetastore vendor/hive-thrift/src/main/thrift/hive_metastore.thrift"
 black = "black pymetastore/ tests/"
 isort = "isort pymetastore/ tests/"
 style = {composite = ["black", "isort"]}
 
 [tool.black]
-exclude = "pymetastore/hms/"
+exclude = "pymetastore/hive_metastore/"
 
 [tool.isort]
 profile = "black"
 case_sensitive = true
-skip_glob = ["pymetastore/hms/*"]
+skip_glob = ["pymetastore/hive_metastore/*"]
 
 [tool.pylint.master]
-ignore = "pymetastore/hms"
+ignore = "pymetastore/hive_metastore"
 fail-under = 7
 
 [tool.pylint.messages_control]
@@ -55,7 +55,7 @@ include = ["pymetastore/"]
 pythonPlatform = "All"
 exclude = [
     "**/__pycache__",
-    "pymetastore/hms"
+    "pymetastore/hive_metastore"
 ]
 
 [tool.pytest.ini_options]
