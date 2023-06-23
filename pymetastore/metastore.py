@@ -241,11 +241,7 @@ class HMS:
         )
 
     def list_tables(self, database_name: str) -> List[str]:
-        tables = self.client.get_all_tables(database_name)
-        table_names = []
-        for table in tables:
-            table_names.append(table.tableName)
-        return table_names
+        return self.client.get_all_tables(database_name)
 
     def list_columns(self, database_name: str, table_name: str) -> List[str]:
         # TODO: Rather than ignore these pyright errors, do appropriate None handling
