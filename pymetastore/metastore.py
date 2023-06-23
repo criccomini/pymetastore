@@ -5,7 +5,16 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
 from .hive_metastore import ThriftHiveMetastore as hms
-from .hive_metastore.ttypes import *
+from .hive_metastore.ttypes import (
+    Database,
+    FieldSchema,
+    Order,
+    Partition,
+    PrincipalType,
+    SerDeInfo,
+    StorageDescriptor,
+    Table,
+)
 from .htypes import HType, TypeParser
 
 
@@ -231,36 +240,46 @@ class HMS:
             db.parameters,
         )
 
-    def list_tables(self, databaseName: str) -> List[str]:
-        tables = self.client.get_all_tables(databaseName)
+    def list_tables(self, database_name: str) -> List[str]:
+        tables = self.client.get_all_tables(database_name)
         table_names = []
         for table in tables:
             table_names.append(table.tableName)
         return table_names
 
-    def list_columns(self, databaseName: str, tableName: str) -> List[str]:
+    def list_columns(self, database_name: str, table_name: str) -> List[str]:
         # TODO: Rather than ignore these pyright errors, do appropriate None handling
         columns = self.client.get_table(
-            databaseName,
-            tableName,
+            database_name,
+            table_name,
         ).sd.cols  # pyright: ignore[reportOptionalMemberAccess]
-        self.client.get_schema(databaseName, tableName)
+        self.client.get_schema(database_name, table_name)
         column_names = []
         for column in columns:  # pyright: ignore[reportOptionalIterable]
             column_names.append(column.name)
         return column_names
 
     def list_partitions(
-        self, databaseName: str, tableName: str, max_parts: int = -1
+        self,
+        database_name: str,
+        table_name: str,
+        max_parts: int = -1,
     ) -> List[str]:
-        partitions = self.client.get_partition_names(databaseName, tableName, max_parts)
+        partitions = self.client.get_partition_names(
+            database_name, table_name, max_parts
+        )
         return partitions
 
     def get_partitions(
-        self, databaseName: str, tableName: str, max_parts: int = -1
+        self,
+        database_name: str,
+        table_name: str,
+        max_parts: int = -1,
     ) -> List[HPartition]:
         partitions: List[Partition] = self.client.get_partitions(
-            databaseName, tableName, max_parts
+            database_name,
+            table_name,
+            max_parts,
         )
         result_partitions = []
 
@@ -360,10 +379,15 @@ class HMS:
         return result_partitions
 
     def get_partition(
-        self, databaseName: str, tableName: str, partition_name: str
+        self,
+        database_name: str,
+        table_name: str,
+        partition_name: str,
     ) -> HPartition:
         partition: Partition = self.client.get_partition_by_name(
-            databaseName, tableName, partition_name
+            database_name,
+            table_name,
+            partition_name,
         )
         if partition is not None:
             if isinstance(partition, Partition):
@@ -526,13 +550,13 @@ class HMS:
                                             raise Exception("dbName is None")
                                         if partition.tableName is not None:
                                             if isinstance(partition.tableName, str):
-                                                tableName = partition.tableName
+                                                table_name = partition.tableName
                                             else:
                                                 raise Exception("tableName is not str")
 
                                         result_partition = HPartition(
                                             dbName,
-                                            tableName,
+                                            table_name,
                                             values,
                                             parameters,
                                             createTime,
@@ -559,8 +583,8 @@ class HMS:
             raise Exception("partition is None")
         return result_partition
 
-    def get_table(self, databaseName: str, tableName: str) -> HTable:
-        table: Table = self.client.get_table(databaseName, tableName)
+    def get_table(self, database_name: str, table_name: str) -> HTable:
+        table: Table = self.client.get_table(database_name, table_name)
 
         columns = []
 
