@@ -75,7 +75,6 @@ class HSortingOrder(Enum):
 
 class HSortingColumn:
     def __init__(self, order: Order):
-    
         self.column = order.col
         if order.order == HSortingOrder.ASC:
             self.order = HSortingOrder.ASC
@@ -154,11 +153,18 @@ class HTable:
         self.write_id = write_id
         self.owner = owner
 
+
 class HSkewedInfo:
-    def __init__(self, skewed_col_names: List[str], skewed_col_values: List[List[str]], skewed_col_value_location_maps: Dict[List[str], str]):
+    def __init__(
+        self,
+        skewed_col_names: List[str],
+        skewed_col_values: List[List[str]],
+        skewed_col_value_location_maps: Dict[List[str], str],
+    ):
         self.skewed_col_names = skewed_col_names
         self.skewed_col_values = skewed_col_values
         self.skewed_col_value_location_maps = skewed_col_value_location_maps
+
 
 class HPartition:
     def __init__(
@@ -253,14 +259,13 @@ class HMS:
     def get_partitions(
         self, databaseName: str, tableName: str, max_parts: int = -1
     ) -> List[HPartition]:
-        
         partitions: List[Partition] = self.client.get_partitions(
             databaseName, tableName, max_parts
         )
         result_partitions = []
 
         if partitions is None:
-            if isinstance(partitions, List): 
+            if isinstance(partitions, List):
                 for partition in partitions:
                     if partition.sd.serdeInfo is not None:
                         if isinstance(partition.sd.serdeInfo, SerDeInfo):
@@ -289,7 +294,7 @@ class HMS:
                                     raise TypeError("outputFormat is not a string")
                             else:
                                 output_format = ""
-                            
+
                             storage_format = StorageFormat(
                                 serialization_lib,
                                 input_format,
@@ -351,7 +356,6 @@ class HMS:
                             )
 
                             result_partitions.append(result_partition)
-                        
 
         return result_partitions
 
@@ -366,10 +370,14 @@ class HMS:
                 if partition.sd is not None:
                     if isinstance(partition.sd, StorageDescriptor):
                         if partition.sd.serdeInfo is not None:
-                            if isinstance(partition.sd.serdeInfo, SerDeInfo): 
+                            if isinstance(partition.sd.serdeInfo, SerDeInfo):
                                 if partition.sd.serdeInfo.serializationLib is not None:
-                                    if isinstance(partition.sd.serdeInfo.serializationLib, str):
-                                        serializationLib = partition.sd.serdeInfo.serializationLib
+                                    if isinstance(
+                                        partition.sd.serdeInfo.serializationLib, str
+                                    ):
+                                        serializationLib = (
+                                            partition.sd.serdeInfo.serializationLib
+                                        )
                                         if partition.sd.inputFormat is not None:
                                             inputFormat = partition.sd.inputFormat
                                         else:
@@ -379,9 +387,9 @@ class HMS:
                                         else:
                                             raise Exception("outputFormat is None")
                                         storage_format = StorageFormat(
-                                        serializationLib,
-                                        inputFormat,
-                                        outputFormat,
+                                            serializationLib,
+                                            inputFormat,
+                                            outputFormat,
                                         )
 
                                         if partition.sd.sortCols is not None:
@@ -393,10 +401,14 @@ class HMS:
                                             sortCols = []
 
                                         if partition.sd.bucketCols is not None:
-                                            if isinstance(partition.sd.bucketCols, list):
+                                            if isinstance(
+                                                partition.sd.bucketCols, list
+                                            ):
                                                 bucketCols = partition.sd.bucketCols
                                             else:
-                                                raise Exception("bucketCols is not list")
+                                                raise Exception(
+                                                    "bucketCols is not list"
+                                                )
                                         else:
                                             bucketCols = []
 
@@ -408,8 +420,13 @@ class HMS:
                                         else:
                                             numBuckets = 0
 
-                                        bucket_property = HiveBucketProperty(bucketCols, numBuckets, BucketingVersion.V1, sortCols)
-                                        
+                                        bucket_property = HiveBucketProperty(
+                                            bucketCols,
+                                            numBuckets,
+                                            BucketingVersion.V1,
+                                            sortCols,
+                                        )
+
                                         if partition.sd.skewedInfo is not None:
                                             is_skewed = True
                                         else:
@@ -422,12 +439,21 @@ class HMS:
                                                 raise Exception("location is not str")
                                         else:
                                             location = ""
-                                        
-                                        if partition.sd.serdeInfo.parameters is not None:
-                                            if isinstance(partition.sd.serdeInfo.parameters, dict):
-                                                parameters = partition.sd.serdeInfo.parameters
+
+                                        if (
+                                            partition.sd.serdeInfo.parameters
+                                            is not None
+                                        ):
+                                            if isinstance(
+                                                partition.sd.serdeInfo.parameters, dict
+                                            ):
+                                                parameters = (
+                                                    partition.sd.serdeInfo.parameters
+                                                )
                                             else:
-                                                raise Exception("parameters is not dict")
+                                                raise Exception(
+                                                    "parameters is not dict"
+                                                )
                                         else:
                                             parameters = {}
                                         sd = HStorage(
@@ -435,8 +461,9 @@ class HMS:
                                             is_skewed,
                                             location,
                                             bucket_property,
-                                            parameters,)
-                                        
+                                            parameters,
+                                        )
+
                                         if partition.catName is not None:
                                             if isinstance(partition.catName, str):
                                                 catName = partition.catName
@@ -453,10 +480,16 @@ class HMS:
                                             writeId = -1
 
                                         if partition.lastAccessTime is not None:
-                                            if isinstance(partition.lastAccessTime, int):
-                                                lastAccessTime = partition.lastAccessTime
+                                            if isinstance(
+                                                partition.lastAccessTime, int
+                                            ):
+                                                lastAccessTime = (
+                                                    partition.lastAccessTime
+                                                )
                                             else:
-                                                raise Exception("lastAccessTime is not int")
+                                                raise Exception(
+                                                    "lastAccessTime is not int"
+                                                )
                                         else:
                                             lastAccessTime = -1
 
@@ -464,7 +497,9 @@ class HMS:
                                             if isinstance(partition.parameters, dict):
                                                 parameters = partition.parameters
                                             else:
-                                                raise Exception("parameters is not dict")
+                                                raise Exception(
+                                                    "parameters is not dict"
+                                                )
                                         else:
                                             parameters = {}
 
@@ -474,7 +509,7 @@ class HMS:
                                             else:
                                                 raise Exception("createTime is not int")
                                         else:
-                                            createTime = -1 
+                                            createTime = -1
                                         if partition.values is not None:
                                             if isinstance(partition.values, list):
                                                 values = partition.values
@@ -494,7 +529,7 @@ class HMS:
                                                 tableName = partition.tableName
                                             else:
                                                 raise Exception("tableName is not str")
-                                        
+
                                         result_partition = HPartition(
                                             dbName,
                                             tableName,
@@ -505,7 +540,7 @@ class HMS:
                                             sd,
                                             catName,
                                             writeId,
-                                            )
+                                        )
                                     else:
                                         raise Exception("serializationLib is not str")
                                 else:
@@ -526,7 +561,7 @@ class HMS:
 
     def get_table(self, databaseName: str, tableName: str) -> HTable:
         table: Table = self.client.get_table(databaseName, tableName)
-        
+
         columns = []
 
         partition_columns = []
@@ -549,11 +584,10 @@ class HMS:
                             else:
                                 raise TypeError(f"Expected name to be str, got None")
                             partition_columns.append(
-                            HColumn(name, type_parser.parse_type(), comment)
+                                HColumn(name, type_parser.parse_type(), comment)
                             )
 
         if table.sd is not None:
-
             if table.sd.cols is not None:
                 if isinstance(table.sd.cols, list):
                     t_columns: List[FieldSchema] = table.sd.cols
@@ -563,7 +597,9 @@ class HMS:
                                 if column.type is not None:
                                     type_parser = TypeParser(column.type)
                                 else:
-                                    raise TypeError(f"Expected type to be str, got None")
+                                    raise TypeError(
+                                        f"Expected type to be str, got None"
+                                    )
                                 if column.comment is not None:
                                     comment = column.comment
                                 else:
@@ -571,7 +607,9 @@ class HMS:
                                 if column.name is not None:
                                     name = column.name
                                 else:
-                                    raise TypeError(f"Expected name to be str, got None")
+                                    raise TypeError(
+                                        f"Expected name to be str, got None"
+                                    )
                                 columns.append(
                                     HColumn(name, type_parser.parse_type(), comment)
                                 )
@@ -582,66 +620,88 @@ class HMS:
                         if isinstance(table.sd.serdeInfo.serializationLib, str):
                             serde = table.sd.serdeInfo.serializationLib
                         else:
-                            raise TypeError(f"Expected serializationLib to be str, got {type(table.sd.serdeInfo.serializationLib)}")
+                            raise TypeError(
+                                f"Expected serializationLib to be str, got {type(table.sd.serdeInfo.serializationLib)}"
+                            )
                     else:
-                        raise TypeError(f"Expected serdeInfo to be str, got {type(table.sd.serdeInfo)}")
+                        raise TypeError(
+                            f"Expected serdeInfo to be str, got {type(table.sd.serdeInfo)}"
+                        )
                 else:
-                    raise TypeError(f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}")
+                    raise TypeError(
+                        f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}"
+                    )
             else:
                 raise TypeError(f"Expected serdeInfo to be SerDeInfo, got None")
-            
+
             if table.sd.inputFormat is not None:
                 if isinstance(table.sd.inputFormat, str):
                     input_format = table.sd.inputFormat
                 else:
-                    raise TypeError(f"Expected inputFormat to be str, got {type(table.sd.inputFormat)}")
+                    raise TypeError(
+                        f"Expected inputFormat to be str, got {type(table.sd.inputFormat)}"
+                    )
             else:
                 raise TypeError(f"Expected inputFormat to be str, got None")
-            
+
             if table.sd.outputFormat is not None:
                 if isinstance(table.sd.outputFormat, str):
                     output_format = table.sd.outputFormat
                 else:
-                    raise TypeError(f"Expected outputFormat to be str, got {type(table.sd.outputFormat)}")
+                    raise TypeError(
+                        f"Expected outputFormat to be str, got {type(table.sd.outputFormat)}"
+                    )
             else:
                 raise TypeError(f"Expected outputFormat to be str, got None")
 
-            storage_format = StorageFormat(
-            serde,
-            input_format,
-            output_format
-            )
+            storage_format = StorageFormat(serde, input_format, output_format)
 
             bucket_property = None
             if table.sd.bucketCols is not None:
-            
                 sort_cols = []
                 if table.sd.sortCols is not None:
                     if isinstance(table.sd.sortCols, list):
                         for col in table.sd.sortCols:
                             sort_cols.append(HSortingColumn(col))
                     else:
-                        raise TypeError(f"Expected bucketCols to be list, got {type(table.sd.sortCols)}")
+                        raise TypeError(
+                            f"Expected bucketCols to be list, got {type(table.sd.sortCols)}"
+                        )
 
                 version = BucketingVersion.V1
                 if table.parameters is not None:
                     if isinstance(table.parameters, dict):
-                        if table.parameters.get("TABLE_BUCKETING_VERSION", BucketingVersion.V1)== BucketingVersion.V2:
+                        if (
+                            table.parameters.get(
+                                "TABLE_BUCKETING_VERSION", BucketingVersion.V1
+                            )
+                            == BucketingVersion.V2
+                        ):
                             version = BucketingVersion.V2
                     else:
-                        raise TypeError(f"Expected parameters to be dict, got {type(table.parameters)}")
+                        raise TypeError(
+                            f"Expected parameters to be dict, got {type(table.parameters)}"
+                        )
                 else:
-                    raise TypeError(f"Expected parameters to be dict, got {type(table.parameters)}")
+                    raise TypeError(
+                        f"Expected parameters to be dict, got {type(table.parameters)}"
+                    )
 
                 if table.sd.numBuckets is not None:
                     if isinstance(table.sd.numBuckets, int):
                         num_buckets = table.sd.numBuckets
                     else:
-                        raise TypeError(f"Expected numBuckets to be int, got {type(table.sd.numBuckets)}")
+                        raise TypeError(
+                            f"Expected numBuckets to be int, got {type(table.sd.numBuckets)}"
+                        )
                 else:
-                    raise TypeError(f"Expected numBuckets to be int, got {type(table.sd.numBuckets)}")
+                    raise TypeError(
+                        f"Expected numBuckets to be int, got {type(table.sd.numBuckets)}"
+                    )
 
-                bucket_property = HiveBucketProperty(table.sd.bucketCols, num_buckets, version, sort_cols)
+                bucket_property = HiveBucketProperty(
+                    table.sd.bucketCols, num_buckets, version, sort_cols
+                )
 
             if table.sd.skewedInfo is None:
                 is_skewed = False
@@ -652,26 +712,38 @@ class HMS:
                 if isinstance(table.sd.location, str):
                     location = table.sd.location
                 else:
-                    raise TypeError(f"Expected location to be str, got {type(table.sd.location)}")
+                    raise TypeError(
+                        f"Expected location to be str, got {type(table.sd.location)}"
+                    )
             else:
                 location = None
-            
+
             if table.sd.serdeInfo is not None:
                 if isinstance(table.sd.serdeInfo, SerDeInfo):
                     serde_info = table.sd.serdeInfo
                 else:
-                    raise TypeError(f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}")
+                    raise TypeError(
+                        f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}"
+                    )
             else:
-                raise TypeError(f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}")
+                raise TypeError(
+                    f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}"
+                )
             if serde_info.parameters is not None:
                 if isinstance(serde_info.parameters, dict):
                     serde_parameters = serde_info.parameters
                 else:
-                    raise TypeError(f"Expected serdeInfo.parameters to be dict, got {type(serde_info.parameters)}")
+                    raise TypeError(
+                        f"Expected serdeInfo.parameters to be dict, got {type(serde_info.parameters)}"
+                    )
             else:
-                raise TypeError(f"Expected serdeInfo.parameters to be dict, got {type(serde_info.parameters)}")
+                raise TypeError(
+                    f"Expected serdeInfo.parameters to be dict, got {type(serde_info.parameters)}"
+                )
         else:
-            raise TypeError(f"Expected sd to be StorageDescriptor, got {type(table.sd)}")
+            raise TypeError(
+                f"Expected sd to be StorageDescriptor, got {type(table.sd)}"
+            )
 
         storage = HStorage(
             storage_format,
@@ -680,34 +752,43 @@ class HMS:
             bucket_property,
             serde_parameters,
         )
-        
+
         if table.parameters is not None:
             if isinstance(table.parameters, dict):
                 params = table.parameters
             else:
-                raise TypeError(f"Expected parameters to be dict, got {type(table.parameters)}")
+                raise TypeError(
+                    f"Expected parameters to be dict, got {type(table.parameters)}"
+                )
         else:
-            raise TypeError(f"Expected parameters to be dict, got {type(table.parameters)}")
-
+            raise TypeError(
+                f"Expected parameters to be dict, got {type(table.parameters)}"
+            )
 
         if table.tableType is not None:
             if isinstance(table.tableType, str):
                 table_type = table.tableType
             else:
-                raise TypeError(f"Expected tableType to be str, got {type(table.tableType)}")
+                raise TypeError(
+                    f"Expected tableType to be str, got {type(table.tableType)}"
+                )
         else:
-            raise TypeError(f"Expected tableType to be str, got {type(table.tableType)}")
+            raise TypeError(
+                f"Expected tableType to be str, got {type(table.tableType)}"
+            )
 
         if table.tableName is not None:
             table_name = table.tableName
         else:
-            raise TypeError(f"Expected tableName to be str, got {type(table.tableName)}")
-        
+            raise TypeError(
+                f"Expected tableName to be str, got {type(table.tableName)}"
+            )
+
         if table.dbName is not None:
             db_name = table.dbName
         else:
             raise TypeError(f"Expected dbName to be str, got {type(table.dbName)}")
-        
+
         return HTable(
             db_name,
             table_name,
