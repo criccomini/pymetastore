@@ -31,6 +31,7 @@ def setup_data(hive_client):
         description="This is a test database",
         locationUri="/tmp/test_db.db",
         parameters={},
+        ownerName="owner",
     )
 
     if "test_db" in hive_client.get_all_databases():
@@ -93,14 +94,12 @@ def test_list_databases(hive_client):
     assert "test_db" in HMS(hive_client).list_databases()
 
 
-@pytest.mark.xfail(reason="'owner_name' is None for some reason. Investigate.")
 def test_get_database(hive_client):
     hms = HMS(hive_client)
     database = hms.get_database("test_db")
     assert isinstance(database, HDatabase)
     assert database.name == "test_db"
     assert database.location == "file:/tmp/test_db.db"
-    # TODO Fix this bug. owner_name is None for some reason.
     assert database.owner_name == "owner"
 
 
