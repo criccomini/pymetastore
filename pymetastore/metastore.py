@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -8,7 +9,6 @@ from .hive_metastore import ThriftHiveMetastore as hms
 from .hive_metastore.ttypes import (
     Database,
     FieldSchema,
-    Order,
     Partition,
     PrincipalType,
     SerDeInfo,
@@ -24,57 +24,37 @@ class HPrincipalType(Enum):
     GROUP = "GROUP"
 
 
+@dataclass
 class HPrivilegeGrantInfo:
-    def __init__(
-        self,
-        privilege: str,
-        grantor: str,
-        grantor_type: HPrincipalType,
-        create_time: int,
-        grant_option: bool,
-    ):
-        self.privilege = privilege
-        self.grantor = grantor
-        self.grantor_type = grantor_type
-        self.create_time = create_time
-        self.grant_option = grant_option
+    privilege: str
+    grantor: str
+    grantor_type: HPrincipalType
+    create_time: int
+    grant_option: bool
 
 
+@dataclass
 class HPrincipalPrivilegeSet:
-    def __init__(
-        self,
-        user_privileges: List[HPrivilegeGrantInfo],
-        group_privileges: List[HPrivilegeGrantInfo],
-        role_privileges: List[HPrivilegeGrantInfo],
-    ):
-        self.user_privileges = user_privileges
-        self.group_privileges = group_privileges
-        self.role_privileges = role_privileges
+    user_privileges: List[HPrivilegeGrantInfo]
+    group_privileges: List[HPrivilegeGrantInfo]
+    role_privileges: List[HPrivilegeGrantInfo]
 
 
+@dataclass
 class HDatabase:
-    def __init__(
-        self,
-        name: str,
-        location: Optional[str] = None,
-        owner_name: Optional[str] = None,
-        owner_type: Optional[HPrincipalType] = None,
-        comment: Optional[str] = None,
-        parameters: Optional[Dict[str, str]] = None,
-    ):
-        self.name = name
-        self.location = location
-        self.owner_name = owner_name
-        self.owner_type = owner_type
-        self.comment = comment
-        self.parameters = parameters
+    name: str
+    location: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_type: Optional[HPrincipalType] = None
+    comment: Optional[str] = None
+    parameters: Optional[Dict[str, str]] = None
 
 
+@dataclass
 class HColumn:
-    def __init__(self, name: str, type: HType, comment: Optional[str] = None):
-        self.name = name
-        self.type = type
-        self.comment = comment
+    name: str
+    type: HType
+    comment: Optional[str] = None
 
 
 class HSortingOrder(Enum):
@@ -82,13 +62,10 @@ class HSortingOrder(Enum):
     DESC = 0
 
 
+@dataclass
 class HSortingColumn:
-    def __init__(self, order: Order):
-        self.column = order.col
-        if order.order == HSortingOrder.ASC:
-            self.order = HSortingOrder.ASC
-        else:
-            self.order = HSortingOrder.DESC
+    column: str
+    order: HSortingOrder
 
 
 class BucketingVersion(Enum):
@@ -96,107 +73,63 @@ class BucketingVersion(Enum):
     V2 = 2
 
 
+@dataclass
 class HiveBucketProperty:
-    def __init__(
-        self,
-        bucketed_by: List[str],
-        bucket_count: int,
-        version: BucketingVersion = BucketingVersion.V1,
-        sorting_columns: List[HSortingColumn] = [],
-    ):
-        self.bucketed_by = bucketed_by
-        self.bucket_count = bucket_count
-        self.version = version
-        self.sorting_columns = sorting_columns
+    bucketed_by: List[str]
+    bucket_count: int
+    version: BucketingVersion = BucketingVersion.V1
+    sorting_columns: List[HSortingColumn] = field(default_factory=list)
 
 
+@dataclass
 class StorageFormat:
-    def __init__(self, serde: str, input_format: str, output_format: str) -> None:
-        self.serde = serde
-        self.input_format = input_format
-        self.output_format = output_format
+    serde: str
+    input_format: str
+    output_format: str
 
 
+@dataclass
 class HStorage:
-    def __init__(
-        self,
-        storage_format: StorageFormat,
-        skewed: bool = False,
-        location: Optional[str] = None,
-        bucket_property: Optional[HiveBucketProperty] = None,
-        serde_parameters: Optional[Dict[str, str]] = None,
-    ):
-        if storage_format is None:
-            raise ValueError("storageFormat cannot be None")
-        self.storage_format = storage_format
-        self.skewed = skewed
-        self.location = location
-        self.bucket_property = bucket_property
-        self.serde_parameters = serde_parameters
+    storage_format: StorageFormat
+    skewed: bool = False
+    location: Optional[str] = None
+    bucket_property: Optional[HiveBucketProperty] = None
+    serde_parameters: Optional[Dict[str, str]] = None
 
 
+@dataclass
 class HTable:
-    def __init__(
-        self,
-        database_name: str,
-        name: str,
-        table_type: str,
-        columns: List[HColumn],
-        partition_columns: List[HColumn],
-        storage: HStorage,
-        parameters: Dict[str, str],
-        view_original_text: Optional[str] = None,
-        view_expanded_text: Optional[str] = None,
-        write_id: Optional[int] = None,
-        owner: Optional[str] = None,
-    ):
-        self.database_name = database_name
-        self.name = name
-        self.storage = storage
-        self.table_type = table_type
-        self.columns = columns
-        self.partition_columns = partition_columns
-        self.parameters = parameters
-        self.view_original_text = view_original_text
-        self.view_expanded_text = view_expanded_text
-        self.write_id = write_id
-        self.owner = owner
+    database_name: str
+    name: str
+    table_type: str
+    columns: List[HColumn]
+    partition_columns: List[HColumn]
+    storage: HStorage
+    parameters: Dict[str, str]
+    view_original_text: Optional[str] = None
+    view_expanded_text: Optional[str] = None
+    write_id: Optional[int] = None
+    owner: Optional[str] = None
 
 
+@dataclass
 class HSkewedInfo:
-    def __init__(
-        self,
-        skewed_col_names: List[str],
-        skewed_col_values: List[List[str]],
-        skewed_col_value_location_maps: Dict[List[str], str],
-    ):
-        self.skewed_col_names = skewed_col_names
-        self.skewed_col_values = skewed_col_values
-        self.skewed_col_value_location_maps = skewed_col_value_location_maps
+    skewed_col_names: List[str]
+    skewed_col_values: List[List[str]]
+    skewed_col_value_location_maps: Dict[List[str], str]
 
 
+@dataclass
 class HPartition:
-    def __init__(
-        self,
-        database_name: str,
-        table_name: str,
-        values: List[str],
-        parameters: Dict[str, str],
-        create_time: int,
-        last_access_time: int,
-        sd: HStorage,
-        cat_name,
-        write_id,
-    ):
-        self.database_name = database_name
-        self.table_name = table_name
-        self.values = values
-        self.parameters = parameters
-        self.create_time = create_time
-        self.last_access_time = last_access_time
-        self.sd = sd
-        self.cat_name = cat_name
-        self.write_id = write_id
+    database_name: str
+    table_name: str
+    values: List[str]
+    parameters: Dict[str, str]
+    create_time: int
+    last_access_time: int
+    sd: HStorage
+    cat_name: str
+    write_id: int
 
 
 class HMS:
@@ -205,14 +138,7 @@ class HMS:
 
     @staticmethod
     def create(host="localhost", port=9083):
-        host = host
-        port = port
-        socket = TSocket.TSocket(host, port)
-        transport = TTransport.TBufferedTransport(socket)
-        protocol = TBinaryProtocol(transport)
-        transport.open()
-        yield hms.Client(protocol)
-        transport.close()
+        return _HMSConnection(host, port)
 
     def list_databases(self) -> List[str]:
         databases = self.client.get_all_databases()
@@ -681,8 +607,8 @@ class HMS:
                 sort_cols = []
                 if table.sd.sortCols is not None:
                     if isinstance(table.sd.sortCols, list):
-                        for col in table.sd.sortCols:
-                            sort_cols.append(HSortingColumn(col))
+                        for order in table.sd.sortCols:
+                            sort_cols.append(HSortingColumn(order.col, order.order))
                     else:
                         raise TypeError(
                             f"Expected bucketCols to be list, got {type(table.sd.sortCols)}"
@@ -822,3 +748,21 @@ class HMS:
             table.writeId,
             table.owner,
         )
+
+
+class _HMSConnection:
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.transport = None
+
+    def __enter__(self):
+        socket = TSocket.TSocket(self.host, self.port)
+        self.transport = TTransport.TBufferedTransport(socket)
+        protocol = TBinaryProtocol(self.transport)
+        self.transport.open()
+        return hms.Client(protocol)
+
+    def __exit__(self, type, value, traceback):
+        if self.transport is not None:
+            self.transport.close()
