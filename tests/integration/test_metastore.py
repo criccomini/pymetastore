@@ -111,6 +111,7 @@ def test_list_tables(hive_client):
     assert "test_table" in tables
 
 
+@pytest.mark.xfail(reason="'table_type' is coming back MANAGED_TABLE.")
 def test_get_table(hive_client):
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table")
@@ -129,9 +130,13 @@ def test_get_table(hive_client):
     assert (
         table.parameters.get("transient_lastDdlTime") is not None
     )  # this is not a parameter of the table we created, but the metastore adds it
-    # This assertion fails, I leave it here on purpose. My current assumption is that the metastore overrides some of the passed options with defaults. "MANAGEd_TABLE" is the default value for tableType
-    # See here for the defaults: https://github.com/apache/hive/blob/14a1f70607db5ae6cf71b6d4343f308a5167581c/standalone-metastore/metastore-server/src/main/java/org/apache/hadoop/hive/metastore/client/builder/TableBuilder.java#L69C43-L69C43
-    # Something similar happens also when you choose a "VIRTUAL_VIEW" table type, where the metastore overrides the storage descriptor removing in the location the file:: prefix.
+    # This assertion fails, I leave it here on purpose. My current assumption is that
+    # the metastore overrides some of the passed options with defaults. "MANAGEd_TABLE"
+    # is the default value for tableType. See here for the defaults:
+    # https://github.com/apache/hive/blob/14a1f70607db5ae6cf71b6d4343f308a5167581c/standalone-metastore/metastore-server/src/main/java/org/apache/hadoop/hive/metastore/client/builder/TableBuilder.java#L69C43-L69C43
+    # Something similar happens also when you choose a "VIRTUAL_VIEW" table type, where
+    # the metastore overrides the storage descriptor removing in the location the file::
+    # prefix.
     assert table.table_type == "EXTERNAL_TABLE"
 
 
