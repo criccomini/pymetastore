@@ -7,7 +7,17 @@ from thrift.transport import TSocket, TTransport
 from pymetastore.hive_metastore import ttypes
 from pymetastore.hive_metastore.ThriftHiveMetastore import Client
 from pymetastore.htypes import HPrimitiveType, HType, HTypeCategory
-from pymetastore.metastore import HMS, HColumn, HDatabase, HTable
+from pymetastore.metastore import (
+    HMS,
+    BucketingVersion,
+    HColumn,
+    HDatabase,
+    HPartition,
+    HStorage,
+    HTable,
+    HiveBucketProperty,
+    StorageFormat,
+)
 
 
 @pytest.fixture(scope="module")
@@ -166,3 +176,95 @@ def test_get_table_columns(hive_client):
     assert partition_columns[0].type.name == "STRING"
     assert partition_columns[0].type.category == HTypeCategory.PRIMITIVE
     assert partition_columns[0].comment == ""
+
+
+def test_list_columns(hive_client):
+    hms = HMS(hive_client)
+    columns = hms.list_columns("test_db", "test_table")
+
+    assert isinstance(columns, list)
+    assert len(columns) == 2
+    assert columns[0] == "col1"
+    assert columns[1] == "col2"
+
+
+def test_list_partitions(hive_client):
+    hms = HMS(hive_client)
+    partitions = hms.list_partitions("test_db", "test_table")
+
+    assert isinstance(partitions, list)
+    assert len(partitions) == 5
+    for i in range(1, 6):
+        assert f"partition={i}" in partitions
+
+
+def test_get_partitions(hive_client):
+    hms = HMS(hive_client)
+    partitions = hms.get_partitions("test_db", "test_table")
+    expected_storage = HStorage(
+        storage_format=StorageFormat(
+            serde="org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+            input_format="org.apache.hadoop.mapred.TextInputFormat",
+            output_format="org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        ),
+        skewed=True,
+        location="file:/tmp/test_db/test_table",
+        bucket_property=HiveBucketProperty(
+            bucketed_by=[],
+            bucket_count=-1,
+            version=BucketingVersion.V1,
+            sorting_columns=[],
+        ),
+        serde_parameters={"field.delim": ","},
+    )
+
+    assert isinstance(partitions, list)
+    assert len(partitions) == 5  # we created 5 partitions in the setup_data fixture
+
+    missing_partitions = {1, 2, 3, 4, 5}
+
+    for partition in partitions:
+        assert isinstance(partition, HPartition)
+        missing_partitions.discard(int(partition.values[0]))
+        assert partition.database_name == "test_db"
+        assert partition.table_name == "test_table"
+        assert partition.sd == expected_storage
+        assert partition.create_time != 0
+        assert partition.last_access_time == 0
+        assert partition.cat_name == "hive"
+        assert isinstance(partition.parameters, dict)
+        assert partition.write_id == -1
+
+    assert missing_partitions == set()
+
+
+def test_get_partition(hive_client):
+    hms = HMS(hive_client)
+    partition = hms.get_partition("test_db", "test_table", "partition=1")
+    expected_storage = HStorage(
+        storage_format=StorageFormat(
+            serde="org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+            input_format="org.apache.hadoop.mapred.TextInputFormat",
+            output_format="org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        ),
+        skewed=True,
+        location="file:/tmp/test_db/test_table",
+        bucket_property=HiveBucketProperty(
+            bucketed_by=[],
+            bucket_count=-1,
+            version=BucketingVersion.V1,
+            sorting_columns=[],
+        ),
+        serde_parameters={"field.delim": ","},
+    )
+
+    assert isinstance(partition, HPartition)
+    assert partition.database_name == "test_db"
+    assert partition.table_name == "test_table"
+    assert partition.values == ["1"]
+    assert partition.sd == expected_storage
+    assert partition.create_time != 0
+    assert partition.last_access_time == 0
+    assert partition.cat_name == "hive"
+    assert isinstance(partition.parameters, dict)
+    assert partition.write_id == -1
