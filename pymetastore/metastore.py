@@ -137,7 +137,7 @@ class HMS:
         self.client = client
 
     @staticmethod
-    def create(host="localhost", port=9083):
+    def create(host: str = "localhost", port: int = 9083) -> "_HMSConnection":
         return _HMSConnection(host, port)
 
     def list_databases(self) -> List[str]:
@@ -200,115 +200,88 @@ class HMS:
         table_name: str,
         max_parts: int = -1,
     ) -> List[HPartition]:
+        result_partitions = []
         partitions: List[Partition] = self.client.get_partitions(
             database_name,
             table_name,
             max_parts,
         )
-        result_partitions = []
 
-        if partitions is not None:
-            if isinstance(partitions, List):
-                for partition in partitions:
-                    if partition.sd is not None and partition.sd.serdeInfo is not None:
-                        if isinstance(partition.sd.serdeInfo, SerDeInfo):
-                            if partition.sd.serdeInfo.serializationLib is not None:
-                                if isinstance(
-                                    partition.sd.serdeInfo.serializationLib, str
-                                ):
-                                    serialization_lib = (
-                                        partition.sd.serdeInfo.serializationLib
-                                    )
-                                else:
-                                    raise TypeError("serializationLib is not a string")
-                            else:
-                                serialization_lib = ""
+        assert isinstance(partitions, list)
 
-                            if partition.sd.inputFormat is not None:
-                                if isinstance(partition.sd.inputFormat, str):
-                                    input_format = partition.sd.inputFormat
-                                else:
-                                    raise TypeError("inputFormat is not a string")
-                            else:
-                                input_format = ""
+        for partition in partitions:
+            assert isinstance(partition, Partition)
+            assert isinstance(partition.sd, StorageDescriptor)
+            assert isinstance(partition.sd.serdeInfo, SerDeInfo)
+            assert isinstance(partition.dbName, str)
+            assert isinstance(partition.tableName, str)
+            assert isinstance(partition.values, list)
+            assert isinstance(partition.parameters, dict)
+            assert isinstance(partition.createTime, int)
+            assert isinstance(partition.lastAccessTime, int)
+            assert isinstance(partition.catName, str)
 
-                            if partition.sd.outputFormat is not None:
-                                if isinstance(partition.sd.outputFormat, str):
-                                    output_format = partition.sd.outputFormat
-                                else:
-                                    raise TypeError("outputFormat is not a string")
-                            else:
-                                output_format = ""
+            serialization_lib = (
+                ""
+                if partition.sd.serdeInfo.serializationLib is None
+                else partition.sd.serdeInfo.serializationLib
+            )
+            input_format = (
+                "" if partition.sd.inputFormat is None else partition.sd.inputFormat
+            )
+            output_format = (
+                "" if partition.sd.outputFormat is None else partition.sd.outputFormat
+            )
+            bucket_cols = (
+                [] if partition.sd.bucketCols is None else partition.sd.bucketCols
+            )
+            sort_cols = [] if partition.sd.sortCols is None else partition.sd.sortCols
+            num_buckets = (
+                0 if partition.sd.numBuckets is None else partition.sd.numBuckets
+            )
+            is_skewed = partition.sd.skewedInfo is not None
 
-                            storage_format = StorageFormat(
-                                serialization_lib,
-                                input_format,
-                                output_format,
-                            )
-                            if partition.sd.bucketCols is not None:
-                                if isinstance(partition.sd.bucketCols, List):
-                                    bucket_cols = partition.sd.bucketCols
-                                else:
-                                    raise TypeError("bucketCols is not a list")
-                            else:
-                                bucket_cols = []
+            assert isinstance(serialization_lib, str)
+            assert isinstance(input_format, str)
+            assert isinstance(output_format, str)
+            assert isinstance(bucket_cols, list)
+            assert isinstance(sort_cols, list)
+            assert isinstance(num_buckets, int)
 
-                            if partition.sd.sortCols is not None:
-                                if isinstance(partition.sd.sortCols, List):
-                                    sort_cols = partition.sd.sortCols
-                                else:
-                                    raise TypeError("sortCols is not a list")
-                            else:
-                                sort_cols = []
+            storage_format = StorageFormat(
+                serialization_lib,
+                input_format,
+                output_format,
+            )
 
-                            if partition.sd.numBuckets is not None:
-                                if isinstance(partition.sd.numBuckets, int):
-                                    num_buckets = partition.sd.numBuckets
-                                else:
-                                    raise TypeError("numBuckets is not an int")
-                            else:
-                                num_buckets = 0
+            bucket_property = HiveBucketProperty(
+                bucket_cols,
+                num_buckets,
+                BucketingVersion.V1,
+                sort_cols,
+            )
 
-                            bucket_property = HiveBucketProperty(
-                                bucket_cols,
-                                num_buckets,
-                                BucketingVersion.V1,
-                                sort_cols,
-                            )
-                            if partition.sd.skewedInfo is None:
-                                is_skewed = False
-                            else:
-                                is_skewed = True
+            sd = HStorage(
+                storage_format,
+                is_skewed,
+                partition.sd.location,
+                bucket_property,
+                partition.sd.serdeInfo.parameters,
+            )
 
-                            sd = HStorage(
-                                storage_format,
-                                is_skewed,
-                                partition.sd.location,
-                                bucket_property,
-                                partition.sd.serdeInfo.parameters,
-                            )
+            result_partition = HPartition(
+                partition.dbName,
+                partition.tableName,
+                partition.values,
+                partition.parameters,
+                partition.createTime,
+                partition.lastAccessTime,
+                sd,
+                partition.catName,
+                partition.writeId,
+            )
 
-                            assert isinstance(partition.dbName, str)
-                            assert isinstance(partition.tableName, str)
-                            assert isinstance(partition.values, list)
-                            assert isinstance(partition.parameters, dict)
-                            assert isinstance(partition.createTime, int)
-                            assert isinstance(partition.lastAccessTime, int)
-                            assert isinstance(partition.catName, str)
-
-                            result_partition = HPartition(
-                                partition.dbName,
-                                partition.tableName,
-                                partition.values,
-                                partition.parameters,
-                                partition.createTime,
-                                partition.lastAccessTime,
-                                sd,
-                                partition.catName,
-                                partition.writeId,
-                            )
-
-                            result_partitions.append(result_partition)
+            result_partitions.append(result_partition)
 
         return result_partitions
 
@@ -323,198 +296,84 @@ class HMS:
             table_name,
             partition_name,
         )
-        if partition is not None:
-            if isinstance(partition, Partition):
-                if partition.sd is not None:
-                    if isinstance(partition.sd, StorageDescriptor):
-                        if partition.sd.serdeInfo is not None:
-                            if isinstance(partition.sd.serdeInfo, SerDeInfo):
-                                if partition.sd.serdeInfo.serializationLib is not None:
-                                    if isinstance(
-                                        partition.sd.serdeInfo.serializationLib, str
-                                    ):
-                                        serializationLib = (
-                                            partition.sd.serdeInfo.serializationLib
-                                        )
-                                        if partition.sd.inputFormat is not None:
-                                            inputFormat = partition.sd.inputFormat
-                                        else:
-                                            raise Exception("inputFormat is None")
-                                        if partition.sd.outputFormat is not None:
-                                            outputFormat = partition.sd.outputFormat
-                                        else:
-                                            raise Exception("outputFormat is None")
-                                        storage_format = StorageFormat(
-                                            serializationLib,
-                                            inputFormat,
-                                            outputFormat,
-                                        )
+        assert partition is not None
+        assert isinstance(partition, Partition)
+        assert isinstance(partition.sd, StorageDescriptor)
+        assert isinstance(partition.sd.serdeInfo, SerDeInfo)
+        assert isinstance(partition.sd.serdeInfo.serializationLib, str)
+        assert partition.sd.inputFormat is not None
+        assert partition.sd.outputFormat is not None
 
-                                        if partition.sd.sortCols is not None:
-                                            if isinstance(partition.sd.sortCols, list):
-                                                sortCols = partition.sd.sortCols
-                                            else:
-                                                raise Exception("sortCols is not list")
-                                        else:
-                                            sortCols = []
+        serialization_lib = partition.sd.serdeInfo.serializationLib
+        input_format = partition.sd.inputFormat
+        output_format = partition.sd.outputFormat
+        storage_format = StorageFormat(
+            serialization_lib,
+            input_format,
+            output_format,
+        )
+        sort_cols = [] if partition.sd.sortCols is None else partition.sd.sortCols
+        bucket_cols = [] if partition.sd.bucketCols is None else partition.sd.bucketCols
+        num_buckets = partition.sd.numBuckets or 0
+        is_skewed = partition.sd.skewedInfo is not None
+        location = "" if partition.sd.location is None else partition.sd.location
+        serde_parameters = (
+            {}
+            if partition.sd.serdeInfo.parameters is None
+            else partition.sd.serdeInfo.parameters
+        )
+        catName = "" if partition.catName is None else partition.catName
+        writeId = -1 if partition.writeId is None else partition.writeId
+        last_access_time = (
+            -1 if partition.lastAccessTime is None else partition.lastAccessTime
+        )
+        partition_parameters = (
+            {} if partition.parameters is None else partition.parameters
+        )
+        create_time = -1 if partition.createTime is None else partition.createTime
+        values = [] if partition.values is None else partition.values
+        db_name = partition.dbName
+        partition_table_name = partition.tableName
 
-                                        if partition.sd.bucketCols is not None:
-                                            if isinstance(
-                                                partition.sd.bucketCols, list
-                                            ):
-                                                bucketCols = partition.sd.bucketCols
-                                            else:
-                                                raise Exception(
-                                                    "bucketCols is not list"
-                                                )
-                                        else:
-                                            bucketCols = []
+        assert isinstance(sort_cols, list)
+        assert isinstance(bucket_cols, list)
+        assert isinstance(num_buckets, int)
+        assert isinstance(location, str)
+        assert isinstance(serde_parameters, dict)
+        assert isinstance(catName, str)
+        assert isinstance(writeId, int)
+        assert isinstance(last_access_time, int)
+        assert isinstance(partition_parameters, dict)
+        assert isinstance(create_time, int)
+        assert isinstance(values, list)
+        assert isinstance(db_name, str)
+        assert isinstance(partition_table_name, str)
 
-                                        if partition.sd.numBuckets is not None:
-                                            if isinstance(partition.sd.numBuckets, int):
-                                                numBuckets = partition.sd.numBuckets
-                                            else:
-                                                raise Exception("numBuckets is not int")
-                                        else:
-                                            numBuckets = 0
+        bucket_property = HiveBucketProperty(
+            bucket_cols,
+            num_buckets,
+            BucketingVersion.V1,
+            sort_cols,
+        )
+        sd = HStorage(
+            storage_format,
+            is_skewed,
+            location,
+            bucket_property,
+            serde_parameters,
+        )
+        result_partition = HPartition(
+            db_name,
+            partition_table_name,
+            values,
+            partition_parameters,
+            create_time,
+            last_access_time,
+            sd,
+            catName,
+            writeId,
+        )
 
-                                        bucket_property = HiveBucketProperty(
-                                            bucketCols,
-                                            numBuckets,
-                                            BucketingVersion.V1,
-                                            sortCols,
-                                        )
-
-                                        if partition.sd.skewedInfo is not None:
-                                            is_skewed = True
-                                        else:
-                                            is_skewed = False
-
-                                        if partition.sd.location is not None:
-                                            if isinstance(partition.sd.location, str):
-                                                location = partition.sd.location
-                                            else:
-                                                raise Exception("location is not str")
-                                        else:
-                                            location = ""
-
-                                        if (
-                                            partition.sd.serdeInfo.parameters
-                                            is not None
-                                        ):
-                                            if isinstance(
-                                                partition.sd.serdeInfo.parameters, dict
-                                            ):
-                                                parameters = (
-                                                    partition.sd.serdeInfo.parameters
-                                                )
-                                            else:
-                                                raise Exception(
-                                                    "parameters is not dict"
-                                                )
-                                        else:
-                                            parameters = {}
-                                        sd = HStorage(
-                                            storage_format,
-                                            is_skewed,
-                                            location,
-                                            bucket_property,
-                                            parameters,
-                                        )
-
-                                        if partition.catName is not None:
-                                            if isinstance(partition.catName, str):
-                                                catName = partition.catName
-                                            else:
-                                                raise Exception("catName is not str")
-                                        else:
-                                            catName = ""
-                                        if partition.writeId is not None:
-                                            if isinstance(partition.writeId, int):
-                                                writeId = partition.writeId
-                                            else:
-                                                raise Exception("writeId is not int")
-                                        else:
-                                            writeId = -1
-
-                                        if partition.lastAccessTime is not None:
-                                            if isinstance(
-                                                partition.lastAccessTime, int
-                                            ):
-                                                lastAccessTime = (
-                                                    partition.lastAccessTime
-                                                )
-                                            else:
-                                                raise Exception(
-                                                    "lastAccessTime is not int"
-                                                )
-                                        else:
-                                            lastAccessTime = -1
-
-                                        if partition.parameters is not None:
-                                            if isinstance(partition.parameters, dict):
-                                                parameters = partition.parameters
-                                            else:
-                                                raise Exception(
-                                                    "parameters is not dict"
-                                                )
-                                        else:
-                                            parameters = {}
-
-                                        if partition.createTime is not None:
-                                            if isinstance(partition.createTime, int):
-                                                createTime = partition.createTime
-                                            else:
-                                                raise Exception("createTime is not int")
-                                        else:
-                                            createTime = -1
-                                        if partition.values is not None:
-                                            if isinstance(partition.values, list):
-                                                values = partition.values
-                                            else:
-                                                raise Exception("values is not list")
-                                        else:
-                                            values = []
-                                        if partition.dbName is not None:
-                                            if isinstance(partition.dbName, str):
-                                                dbName = partition.dbName
-                                            else:
-                                                raise Exception("dbName is not str")
-                                        else:
-                                            raise Exception("dbName is None")
-                                        if partition.tableName is not None:
-                                            if isinstance(partition.tableName, str):
-                                                table_name = partition.tableName
-                                            else:
-                                                raise Exception("tableName is not str")
-
-                                        result_partition = HPartition(
-                                            dbName,
-                                            table_name,
-                                            values,
-                                            parameters,
-                                            createTime,
-                                            lastAccessTime,
-                                            sd,
-                                            catName,
-                                            writeId,
-                                        )
-                                    else:
-                                        raise Exception("serializationLib is not str")
-                                else:
-                                    raise Exception("serializationLib is None")
-                            else:
-                                raise Exception("serdeInfo is not SerDeInfo")
-                        else:
-                            raise Exception("serdeInfo is None")
-                    else:
-                        raise Exception("sd is not StorageDescriptor")
-                else:
-                    raise Exception("sd is None")
-            else:
-                raise Exception("partition is not Partition")
-        else:
-            raise Exception("partition is None")
         return result_partition
 
     def get_table(self, database_name: str, table_name: str) -> HTable:
