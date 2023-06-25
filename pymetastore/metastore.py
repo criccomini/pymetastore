@@ -188,7 +188,9 @@ class HMS:
         max_parts: int = -1,
     ) -> List[str]:
         partitions = self.client.get_partition_names(
-            database_name, table_name, max_parts
+            database_name,
+            table_name,
+            max_parts,
         )
         return partitions
 
@@ -205,16 +207,18 @@ class HMS:
         )
         result_partitions = []
 
-        if partitions is None:
+        if partitions is not None:
             if isinstance(partitions, List):
                 for partition in partitions:
-                    if partition.sd.serdeInfo is not None:
+                    if partition.sd is not None and partition.sd.serdeInfo is not None:
                         if isinstance(partition.sd.serdeInfo, SerDeInfo):
                             if partition.sd.serdeInfo.serializationLib is not None:
                                 if isinstance(
                                     partition.sd.serdeInfo.serializationLib, str
                                 ):
-                                    serialization_lib = partition
+                                    serialization_lib = (
+                                        partition.sd.serdeInfo.serializationLib
+                                    )
                                 else:
                                     raise TypeError("serializationLib is not a string")
                             else:
@@ -283,6 +287,14 @@ class HMS:
                                 bucket_property,
                                 partition.sd.serdeInfo.parameters,
                             )
+
+                            assert isinstance(partition.dbName, str)
+                            assert isinstance(partition.tableName, str)
+                            assert isinstance(partition.values, list)
+                            assert isinstance(partition.parameters, dict)
+                            assert isinstance(partition.createTime, int)
+                            assert isinstance(partition.lastAccessTime, int)
+                            assert isinstance(partition.catName, str)
 
                             result_partition = HPartition(
                                 partition.dbName,
@@ -761,7 +773,7 @@ class _HMSConnection:
         self.transport = TTransport.TBufferedTransport(socket)
         protocol = TBinaryProtocol(self.transport)
         self.transport.open()
-        return hms.Client(protocol)
+        return HMS(hms.Client(protocol))
 
     def __exit__(self, type, value, traceback):
         if self.transport is not None:
