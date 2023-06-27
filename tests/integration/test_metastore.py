@@ -99,6 +99,52 @@ def setup_data(hive_client):
             parameters={},
         )
         hive_client.add_partition(partition)
+    
+    # testing primitive Types
+    cols2 = [
+    ttypes.FieldSchema(name="col3", type="void", comment="c3"),
+    ttypes.FieldSchema(name="col4", type="boolean", comment="c4"),
+    ttypes.FieldSchema(name="col5", type="tinyint", comment="c5"),
+    ttypes.FieldSchema(name="col6", type="smallint", comment="c6"),
+    ttypes.FieldSchema(name="col7", type="bigint", comment="c7"),
+    ttypes.FieldSchema(name="col8", type="float", comment="c8"),
+    ttypes.FieldSchema(name="col9", type="double", comment="c9"),
+    ttypes.FieldSchema(name="col10", type="date", comment="c10"),
+    ttypes.FieldSchema(name="col11", type="timestamp", comment="c11"),
+    ttypes.FieldSchema(name="col12", type="timestamp with local time zone", comment="c12"),
+    ttypes.FieldSchema(name="col13", type="interval_year_month", comment="c13"),
+    ttypes.FieldSchema(name="col14", type="interval_day_time", comment="c14"),
+    ttypes.FieldSchema(name="col15", type="binary", comment="c15"),
+    ]
+
+    storageDesc = ttypes.StorageDescriptor(
+        location="/tmp/test_db/test_table2",
+        cols=cols2,
+        inputFormat="org.apache.hadoop.mapred.TextInputFormat",
+        outputFormat="org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        compressed=False,
+        numBuckets=-1,
+        serdeInfo=serde_info,
+        bucketCols=[],
+    )
+
+    table = ttypes.Table(
+        tableName="test_table2",
+        dbName="test_db",
+        owner="owner",
+        createTime=0,
+        lastAccessTime=0,
+        retention=0,
+        sd=storageDesc,
+        partitionKeys=partitionKeys,
+        parameters={},
+        tableType="EXTERNAL_TABLE",
+    )
+
+    if "test_table2" in hive_client.get_all_tables("test_db"):
+        hive_client.drop_table("test_db", "test_table2", True)
+    hive_client.create_table(table)
+
 
 
 def test_list_databases(hive_client):
@@ -268,3 +314,102 @@ def test_get_partition(hive_client):
     assert partition.cat_name == "hive"
     assert isinstance(partition.parameters, dict)
     assert partition.write_id == -1
+
+def test_primitive_types(hive_client):
+    hms = HMS(hive_client)
+
+    table = hms.get_table("test_db", "test_table2")
+    columns = table.columns
+
+    assert len(columns) == 13
+
+    assert columns[0].name == "col3"
+    assert isinstance(columns[0].type, HType)
+    assert isinstance(columns[0].type, HPrimitiveType)
+    assert columns[0].type.name == "VOID"
+    assert columns[0].type.category == HTypeCategory.PRIMITIVE
+    assert columns[0].comment == "c3"
+
+    assert columns[1].name == "col4"
+    assert isinstance(columns[1].type, HType)
+    assert isinstance(columns[1].type, HPrimitiveType)
+    assert columns[1].type.name == "BOOLEAN"
+    assert columns[1].type.category == HTypeCategory.PRIMITIVE
+    assert columns[1].comment == "c4"
+
+    assert columns[2].name == "col5"
+    assert isinstance(columns[2].type, HType)
+    assert isinstance(columns[2].type, HPrimitiveType)
+    assert columns[2].type.name == "BYTE"
+    assert columns[2].type.category == HTypeCategory.PRIMITIVE
+    assert columns[2].comment == "c5"
+
+    assert columns[3].name == "col6"
+    assert isinstance(columns[3].type, HType)
+    assert isinstance(columns[3].type, HPrimitiveType)
+    assert columns[3].type.name == "SHORT"
+    assert columns[3].type.category == HTypeCategory.PRIMITIVE
+    assert columns[3].comment == "c6"
+
+    assert columns[4].name == "col7"
+    assert isinstance(columns[4].type, HType)
+    assert isinstance(columns[4].type, HPrimitiveType)
+    assert columns[4].type.name == "LONG"
+    assert columns[4].type.category == HTypeCategory.PRIMITIVE
+    assert columns[4].comment == "c7"
+
+    assert columns[5].name == "col8"
+    assert isinstance(columns[5].type, HType)
+    assert isinstance(columns[5].type, HPrimitiveType)
+    assert columns[5].type.name == "FLOAT"
+    assert columns[5].type.category == HTypeCategory.PRIMITIVE
+    assert columns[5].comment == "c8"
+
+    assert columns[6].name == "col9"
+    assert isinstance(columns[6].type, HType)
+    assert isinstance(columns[6].type, HPrimitiveType)
+    assert columns[6].type.name == "DOUBLE"
+    assert columns[6].type.category == HTypeCategory.PRIMITIVE
+    assert columns[6].comment == "c9"
+
+    assert columns[7].name == "col10"
+    assert isinstance(columns[7].type, HType)
+    assert isinstance(columns[7].type, HPrimitiveType)
+    assert columns[7].type.name == "DATE"
+    assert columns[7].type.category == HTypeCategory.PRIMITIVE
+    assert columns[7].comment == "c10"
+
+    assert columns[8].name == "col11"
+    assert isinstance(columns[8].type, HType)
+    assert isinstance(columns[8].type, HPrimitiveType)
+    assert columns[8].type.name == "TIMESTAMP"
+    assert columns[8].type.category == HTypeCategory.PRIMITIVE
+    assert columns[8].comment == "c11"
+
+    assert columns[9].name == "col12"
+    assert isinstance(columns[9].type, HType)
+    assert isinstance(columns[9].type, HPrimitiveType)
+    assert columns[9].type.name == "TIMESTAMPLOCALTZ"
+    assert columns[9].type.category == HTypeCategory.PRIMITIVE
+    assert columns[9].comment == "c12"
+
+    assert columns[10].name == "col13"
+    assert isinstance(columns[10].type, HType)
+    assert isinstance(columns[10].type, HPrimitiveType)
+    assert columns[10].type.name == "INTERVAL_YEAR_MONTH"
+    assert columns[10].type.category == HTypeCategory.PRIMITIVE
+    assert columns[10].comment == "c13"
+
+    assert columns[11].name == "col14"
+    assert isinstance(columns[11].type, HType)
+    assert isinstance(columns[11].type, HPrimitiveType)
+    assert columns[11].type.name == "INTERVAL_DAY_TIME"
+    assert columns[11].type.category == HTypeCategory.PRIMITIVE
+    assert columns[11].comment == "c14"
+
+    assert columns[12].name == "col15"
+    assert isinstance(columns[12].type, HType)
+    assert isinstance(columns[12].type, HPrimitiveType)
+    assert columns[12].type.name == "BINARY"
+    assert columns[12].type.category == HTypeCategory.PRIMITIVE
+    assert columns[12].comment == "c15"
