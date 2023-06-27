@@ -6,7 +6,18 @@ from thrift.transport import TSocket, TTransport
 
 from pymetastore.hive_metastore import ttypes
 from pymetastore.hive_metastore.ThriftHiveMetastore import Client
-from pymetastore.htypes import HPrimitiveType, HType, HTypeCategory, HDecimalType, HVarcharType, HCharType, HMapType, HListType, HStructType, HUnionType
+from pymetastore.htypes import (
+    HCharType,
+    HDecimalType,
+    HListType,
+    HMapType,
+    HPrimitiveType,
+    HStructType,
+    HType,
+    HTypeCategory,
+    HUnionType,
+    HVarcharType,
+)
 from pymetastore.metastore import (
     HMS,
     BucketingVersion,
@@ -99,22 +110,24 @@ def setup_data(hive_client):
             parameters={},
         )
         hive_client.add_partition(partition)
-    
+
     # testing primitive Types
     cols2 = [
-    ttypes.FieldSchema(name="col3", type="void", comment="c3"),
-    ttypes.FieldSchema(name="col4", type="boolean", comment="c4"),
-    ttypes.FieldSchema(name="col5", type="tinyint", comment="c5"),
-    ttypes.FieldSchema(name="col6", type="smallint", comment="c6"),
-    ttypes.FieldSchema(name="col7", type="bigint", comment="c7"),
-    ttypes.FieldSchema(name="col8", type="float", comment="c8"),
-    ttypes.FieldSchema(name="col9", type="double", comment="c9"),
-    ttypes.FieldSchema(name="col10", type="date", comment="c10"),
-    ttypes.FieldSchema(name="col11", type="timestamp", comment="c11"),
-    ttypes.FieldSchema(name="col12", type="timestamp with local time zone", comment="c12"),
-    ttypes.FieldSchema(name="col13", type="interval_year_month", comment="c13"),
-    ttypes.FieldSchema(name="col14", type="interval_day_time", comment="c14"),
-    ttypes.FieldSchema(name="col15", type="binary", comment="c15"),
+        ttypes.FieldSchema(name="col3", type="void", comment="c3"),
+        ttypes.FieldSchema(name="col4", type="boolean", comment="c4"),
+        ttypes.FieldSchema(name="col5", type="tinyint", comment="c5"),
+        ttypes.FieldSchema(name="col6", type="smallint", comment="c6"),
+        ttypes.FieldSchema(name="col7", type="bigint", comment="c7"),
+        ttypes.FieldSchema(name="col8", type="float", comment="c8"),
+        ttypes.FieldSchema(name="col9", type="double", comment="c9"),
+        ttypes.FieldSchema(name="col10", type="date", comment="c10"),
+        ttypes.FieldSchema(name="col11", type="timestamp", comment="c11"),
+        ttypes.FieldSchema(
+            name="col12", type="timestamp with local time zone", comment="c12"
+        ),
+        ttypes.FieldSchema(name="col13", type="interval_year_month", comment="c13"),
+        ttypes.FieldSchema(name="col14", type="interval_day_time", comment="c14"),
+        ttypes.FieldSchema(name="col15", type="binary", comment="c15"),
     ]
 
     storageDesc = ttypes.StorageDescriptor(
@@ -147,13 +160,13 @@ def setup_data(hive_client):
 
     # testing Parameterized Types
     cols3 = [
-    ttypes.FieldSchema(name="col16", type="decimal(10,2)", comment="c16"),
-    ttypes.FieldSchema(name="col17", type="varchar(10)", comment="c17"),
-    ttypes.FieldSchema(name="col18", type="char(10)", comment="c18"),
-    ttypes.FieldSchema(name="col19", type="array<int>", comment="c19"),
-    ttypes.FieldSchema(name="col20", type="map<int,string>", comment="c20"),
-    ttypes.FieldSchema(name="col21", type="struct<a:int,b:string>", comment="c21"),
-    ttypes.FieldSchema(name="col22", type="uniontype<int,string>", comment="c22"),
+        ttypes.FieldSchema(name="col16", type="decimal(10,2)", comment="c16"),
+        ttypes.FieldSchema(name="col17", type="varchar(10)", comment="c17"),
+        ttypes.FieldSchema(name="col18", type="char(10)", comment="c18"),
+        ttypes.FieldSchema(name="col19", type="array<int>", comment="c19"),
+        ttypes.FieldSchema(name="col20", type="map<int,string>", comment="c20"),
+        ttypes.FieldSchema(name="col21", type="struct<a:int,b:string>", comment="c21"),
+        ttypes.FieldSchema(name="col22", type="uniontype<int,string>", comment="c22"),
     ]
 
     storageDesc = ttypes.StorageDescriptor(
@@ -183,8 +196,6 @@ def setup_data(hive_client):
     if "test_table3" in hive_client.get_all_tables("test_db"):
         hive_client.drop_table("test_db", "test_table3", True)
     hive_client.create_table(table)
-
-
 
 
 def test_list_databases(hive_client):
@@ -355,6 +366,7 @@ def test_get_partition(hive_client):
     assert isinstance(partition.parameters, dict)
     assert partition.write_id == -1
 
+
 def test_primitive_types(hive_client):
     hms = HMS(hive_client)
 
@@ -453,6 +465,7 @@ def test_primitive_types(hive_client):
     assert columns[12].type.name == "BINARY"
     assert columns[12].type.category == HTypeCategory.PRIMITIVE
     assert columns[12].comment == "c15"
+
 
 def test_parameterized_types(hive_client):
     hms = HMS(hive_client)
