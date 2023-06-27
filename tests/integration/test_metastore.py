@@ -6,7 +6,7 @@ from thrift.transport import TSocket, TTransport
 
 from pymetastore.hive_metastore import ttypes
 from pymetastore.hive_metastore.ThriftHiveMetastore import Client
-from pymetastore.htypes import HPrimitiveType, HType, HTypeCategory
+from pymetastore.htypes import HPrimitiveType, HType, HTypeCategory, HDecimalType, HVarcharType, HCharType, HMapType, HListType, HStructType, HUnionType
 from pymetastore.metastore import (
     HMS,
     BucketingVersion,
@@ -144,6 +144,46 @@ def setup_data(hive_client):
     if "test_table2" in hive_client.get_all_tables("test_db"):
         hive_client.drop_table("test_db", "test_table2", True)
     hive_client.create_table(table)
+
+    # testing Parameterized Types
+    cols3 = [
+    ttypes.FieldSchema(name="col16", type="decimal(10,2)", comment="c16"),
+    ttypes.FieldSchema(name="col17", type="varchar(10)", comment="c17"),
+    ttypes.FieldSchema(name="col18", type="char(10)", comment="c18"),
+    ttypes.FieldSchema(name="col19", type="array<int>", comment="c19"),
+    ttypes.FieldSchema(name="col20", type="map<int,string>", comment="c20"),
+    ttypes.FieldSchema(name="col21", type="struct<a:int,b:string>", comment="c21"),
+    ttypes.FieldSchema(name="col22", type="uniontype<int,string>", comment="c22"),
+    ]
+
+    storageDesc = ttypes.StorageDescriptor(
+        location="/tmp/test_db/test_table3",
+        cols=cols3,
+        inputFormat="org.apache.hadoop.mapred.TextInputFormat",
+        outputFormat="org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        compressed=False,
+        numBuckets=-1,
+        serdeInfo=serde_info,
+        bucketCols=[],
+    )
+
+    table = ttypes.Table(
+        tableName="test_table3",
+        dbName="test_db",
+        owner="owner",
+        createTime=0,
+        lastAccessTime=0,
+        retention=0,
+        sd=storageDesc,
+        partitionKeys=partitionKeys,
+        parameters={},
+        tableType="EXTERNAL_TABLE",
+    )
+
+    if "test_table3" in hive_client.get_all_tables("test_db"):
+        hive_client.drop_table("test_db", "test_table3", True)
+    hive_client.create_table(table)
+
 
 
 
@@ -413,3 +453,89 @@ def test_primitive_types(hive_client):
     assert columns[12].type.name == "BINARY"
     assert columns[12].type.category == HTypeCategory.PRIMITIVE
     assert columns[12].comment == "c15"
+
+def test_parameterized_types(hive_client):
+    hms = HMS(hive_client)
+    table = hms.get_table("test_db", "test_table3")
+    columns = table.columns
+
+    assert len(columns) == 7
+
+    assert columns[0].name == "col16"
+    assert isinstance(columns[0].type, HType)
+    assert isinstance(columns[0].type, HDecimalType)
+    assert columns[0].type.name == "DECIMAL"
+    assert columns[0].type.category == HTypeCategory.PRIMITIVE
+    assert columns[0].comment == "c16"
+    assert columns[0].type.precision == 10
+    assert columns[0].type.scale == 2
+
+    assert columns[1].name == "col17"
+    assert isinstance(columns[1].type, HType)
+    assert isinstance(columns[1].type, HVarcharType)
+    assert columns[1].type.name == "VARCHAR"
+    assert columns[1].type.category == HTypeCategory.PRIMITIVE
+    assert columns[1].comment == "c17"
+    assert columns[1].type.length == 10
+
+    assert columns[2].name == "col18"
+    assert isinstance(columns[2].type, HType)
+    assert isinstance(columns[2].type, HCharType)
+    assert columns[2].type.name == "CHAR"
+    assert columns[2].type.category == HTypeCategory.PRIMITIVE
+    assert columns[2].comment == "c18"
+    assert columns[2].type.length == 10
+
+    assert columns[3].name == "col19"
+    assert isinstance(columns[3].type, HType)
+    assert isinstance(columns[3].type, HListType)
+    assert columns[3].type.name == "LIST"
+    assert columns[3].type.category == HTypeCategory.LIST
+    assert columns[3].comment == "c19"
+    assert isinstance(columns[3].type.element_type, HType)
+    assert isinstance(columns[3].type.element_type, HPrimitiveType)
+    assert columns[3].type.element_type.name == "INT"
+
+    assert columns[4].name == "col20"
+    assert isinstance(columns[4].type, HType)
+    assert isinstance(columns[4].type, HMapType)
+    assert columns[4].type.name == "MAP"
+    assert columns[4].type.category == HTypeCategory.MAP
+    assert columns[4].comment == "c20"
+    assert isinstance(columns[4].type.key_type, HType)
+    assert isinstance(columns[4].type.key_type, HPrimitiveType)
+    assert columns[4].type.key_type.name == "INT"
+    assert isinstance(columns[4].type.value_type, HType)
+    assert isinstance(columns[4].type.value_type, HPrimitiveType)
+    assert columns[4].type.value_type.name == "STRING"
+
+    assert columns[5].name == "col21"
+    assert isinstance(columns[5].type, HType)
+    assert isinstance(columns[5].type, HStructType)
+    assert columns[5].type.name == "STRUCT"
+    assert columns[5].type.category == HTypeCategory.STRUCT
+    assert columns[5].comment == "c21"
+    assert len(columns[5].type.names) == 2
+    assert len(columns[5].type.types) == 2
+    assert columns[5].type.names[0] == "a"
+    assert columns[5].type.names[1] == "b"
+    assert isinstance(columns[5].type.types[0], HType)
+    assert isinstance(columns[5].type.types[0], HPrimitiveType)
+    assert columns[5].type.types[0].name == "INT"
+    assert isinstance(columns[5].type.types[1], HType)
+    assert isinstance(columns[5].type.types[1], HPrimitiveType)
+    assert columns[5].type.types[1].name == "STRING"
+
+    assert columns[6].name == "col22"
+    assert isinstance(columns[6].type, HType)
+    assert isinstance(columns[6].type, HUnionType)
+    assert columns[6].type.name == "UNION"
+    assert columns[6].type.category == HTypeCategory.UNION
+    assert columns[6].comment == "c22"
+    assert len(columns[6].type.types) == 2
+    assert isinstance(columns[6].type.types[0], HType)
+    assert isinstance(columns[6].type.types[0], HPrimitiveType)
+    assert columns[6].type.types[0].name == "INT"
+    assert isinstance(columns[6].type.types[1], HType)
+    assert isinstance(columns[6].type.types[1], HPrimitiveType)
+    assert columns[6].type.types[1].name == "STRING"
