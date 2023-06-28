@@ -38,11 +38,29 @@ class HType:
         self.name = name
         self.category = category
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(name={self.name}, category={self.category})"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self.name}', {self.category})"
+
+    def __eq__(self, other):
+        if isinstance(other, HType):
+            return (self.name == other.name) and (self.category == other.category)
+        else:
+            return False
+
 
 class HPrimitiveType(HType):
     def __init__(self, primitive_type: PrimitiveCategory):
         super().__init__(primitive_type.value, HTypeCategory.PRIMITIVE)
         self.primitive_type = primitive_type
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(name={self.name}, category={self.category})"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.primitive_type})"
 
 
 class HMapType(HType):
@@ -51,17 +69,57 @@ class HMapType(HType):
         self.key_type = key_type
         self.value_type = value_type
 
+    def __str__(self):
+        return f"{super().__str__()}, key_type={str(self.key_type)}, value_type={str(self.value_type)})"
+
+    def __repr__(self):
+        return f"HMapType({repr(self.key_type)}, {repr(self.value_type)})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                super().__eq__(other)
+                and (self.key_type == other.key_type)
+                and (self.value_type == other.value_type)
+            )
+        else:
+            return False
+
 
 class HListType(HType):
     def __init__(self, element_type: HType):
         super().__init__("LIST", HTypeCategory.LIST)
         self.element_type = element_type
 
+    def __str__(self):
+        return f"{super().__str__()}, element_type={str(self.element_type)})"
+
+    def __repr__(self):
+        return f"HListType({repr(self.element_type)})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return super().__eq__(other) and (self.element_type == other.element_type)
+        else:
+            return False
+
 
 class HUnionType(HType):
     def __init__(self, types: List[HType]):
         super().__init__("UNION", HTypeCategory.UNION)
         self.types = types
+
+    def __str__(self):
+        return f"{super().__str__()}, types={str(self.types)})"
+
+    def __repr__(self):
+        return f"HUnionType({repr(self.types)})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return super().__eq__(other) and (self.types == other.types)
+        else:
+            return False
 
 
 class HVarcharType(HType):
@@ -72,6 +130,18 @@ class HVarcharType(HType):
         super().__init__("VARCHAR", HTypeCategory.PRIMITIVE)
         self.length = length
 
+    def __str__(self):
+        return f"HVarcharType(length={self.length})"
+
+    def __repr__(self):
+        return f"HVarcharType({self.length})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return super().__eq__(other) and (self.length == other.length)
+        else:
+            return False
+
 
 class HCharType(HType):
     def __init__(self, length: int):
@@ -80,6 +150,18 @@ class HCharType(HType):
             raise ValueError("Char length cannot exceed 255")
         super().__init__("CHAR", HTypeCategory.PRIMITIVE)
         self.length = length
+
+    def __str__(self):
+        return f"HCharType(length={self.length})"
+
+    def __repr__(self):
+        return f"HCharType({self.length})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return super().__eq__(other) and (self.length == other.length)
+        else:
+            return False
 
 
 class HDecimalType(HType):
@@ -94,6 +176,22 @@ class HDecimalType(HType):
         self.precision = precision
         self.scale = scale
 
+    def __str__(self):
+        return f"HDecimalType(precision={self.precision}, scale={self.scale})"
+
+    def __repr__(self):
+        return f"HDecimalType({self.precision}, {self.scale})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                super().__eq__(other)
+                and (self.precision == other.precision)
+                and (self.scale == other.scale)
+            )
+        else:
+            return False
+
 
 class HStructType(HType):
     def __init__(self, names: List[str], types: List[HType]):
@@ -107,6 +205,22 @@ class HStructType(HType):
         super().__init__("STRUCT", HTypeCategory.STRUCT)
         self.names = names
         self.types = types
+
+    def __str__(self):
+        return f"{super().__str__()}, names={self.names}, types={self.types})"
+
+    def __repr__(self):
+        return f"HStructType({self.names}, {self.types})"
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                super().__eq__(other)
+                and (self.names == other.names)
+                and (self.types == other.types)
+            )
+        else:
+            return False
 
 
 # We need to maintain a list of the expected serialized type names.
