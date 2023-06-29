@@ -7,6 +7,7 @@ from pymetastore.htypes import (
     HMapType,
     HPrimitiveType,
     HStructType,
+    HType,
     HTypeCategory,
     HUnionType,
     HVarcharType,
@@ -484,3 +485,116 @@ def test_union_type_parser():
     assert ptype.types[0].category == HPrimitiveType(PrimitiveCategory.INT).category
     assert ptype.types[1].name == "STRING"
     assert ptype.types[1].category == HPrimitiveType(PrimitiveCategory.STRING).category
+
+
+def test_htype_str_repr():
+    ex = HType("int", PrimitiveCategory.INT)
+    assert str(ex) == "HType(name=int, category=PrimitiveCategory.INT)"
+    assert repr(ex) == "HType('int', PrimitiveCategory.INT)"
+    clone = eval(repr(ex))
+    assert clone == ex
+
+
+def test_hmap_type_str_repr_and_eq():
+    typ = HMapType(
+        HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT)
+    )
+    assert isinstance(typ, HMapType)
+    assert (
+        str(typ)
+        == "HMapType(name=MAP, category=HTypeCategory.MAP), key_type=HPrimitiveType(name=STRING, category=HTypeCategory.PRIMITIVE), value_type=HPrimitiveType(name=INT, category=HTypeCategory.PRIMITIVE))"
+    )
+    assert (
+        repr(typ)
+        == "HMapType(HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT))"
+    )
+
+    clone = eval(repr(typ))
+    assert clone == typ
+
+
+def test_hlist_type_str_repr_and_eq():
+    _type = HListType(HPrimitiveType(PrimitiveCategory.INT))
+    assert isinstance(_type, HListType)
+    assert (
+        str(_type)
+        == "HListType(name=LIST, category=HTypeCategory.LIST), element_type=HPrimitiveType(name=INT, category=HTypeCategory.PRIMITIVE))"
+    )
+    assert repr(_type) == "HListType(HPrimitiveType(PrimitiveCategory.INT))"
+
+    clone = eval(repr(_type))
+    assert clone == _type
+
+
+def test_hunion_type_str_repr_and_eq():
+    _type = HUnionType(
+        [
+            HPrimitiveType(PrimitiveCategory.INT),
+            HPrimitiveType(PrimitiveCategory.STRING),
+        ]
+    )
+    assert isinstance(_type, HUnionType)
+    assert (
+        str(_type)
+        == "HUnionType(name=UNION, category=HTypeCategory.UNION), types=[HPrimitiveType(PrimitiveCategory.INT), HPrimitiveType(PrimitiveCategory.STRING)])"
+    )
+    assert (
+        repr(_type)
+        == "HUnionType([HPrimitiveType(PrimitiveCategory.INT), HPrimitiveType(PrimitiveCategory.STRING)])"
+    )
+
+    clone = eval(repr(_type))
+    assert clone == _type
+
+
+def test_hvarchar_type_str_repr_and_eq():
+    _type = HVarcharType(10)
+    assert isinstance(_type, HVarcharType)
+    assert str(_type) == "HVarcharType(length=10)"
+    assert repr(_type) == "HVarcharType(10)"
+
+    clone = eval(repr(_type))
+    assert clone == _type
+
+
+def test_hchar_type_str_repr_and_eq():
+    _type = HCharType(10)
+    assert isinstance(_type, HCharType)
+    assert str(_type) == "HCharType(length=10)"
+    assert repr(_type) == "HCharType(10)"
+
+    clone = eval(repr(_type))
+    assert clone == _type
+
+
+def test_hdecimal_type_str_repr_and_eq():
+    _type = HDecimalType(10, 2)
+    assert isinstance(_type, HDecimalType)
+    assert str(_type) == "HDecimalType(precision=10, scale=2)"
+    assert repr(_type) == "HDecimalType(10, 2)"
+
+    clone = eval(repr(_type))
+    assert clone == _type
+
+
+def test_hstruct_type_str_repr_and_eq():
+    _type = HStructType(
+        ["name", "age"],
+        [
+            HPrimitiveType(PrimitiveCategory.STRING),
+            HPrimitiveType(PrimitiveCategory.INT),
+        ],
+    )
+    assert isinstance(_type, HStructType)
+
+    assert (
+        str(_type)
+        == "HStructType(name=STRUCT, category=HTypeCategory.STRUCT), names=['name', 'age'], types=[HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT)])"
+    )
+    assert (
+        repr(_type)
+        == "HStructType(['name', 'age'], [HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT)])"
+    )
+
+    clone = eval(repr(_type))
+    assert clone == _type
