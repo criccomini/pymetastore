@@ -29,8 +29,8 @@ from pymetastore.metastore import (
     HiveBucketProperty,
     StorageFormat,
 )
-
 from pymetastore.stats import *
+
 
 @pytest.fixture(scope="module")
 def hive_client():
@@ -198,9 +198,7 @@ def setup_data(hive_client):
         hive_client.drop_table("test_db", "test_table3", True)
     hive_client.create_table(table)
 
-    cols4 = [
-       ttypes.FieldSchema(name="col4", type="boolean", comment="c4") 
-    ]
+    cols4 = [ttypes.FieldSchema(name="col4", type="boolean", comment="c4")]
 
     storageDesc = ttypes.StorageDescriptor(
         location="/tmp/test_db/test_table4",
@@ -233,11 +231,12 @@ def setup_data(hive_client):
     stats_desc = ttypes.ColumnStatisticsDesc(True, "test_db", "test_table4", "col4")
 
     stats = ttypes.BooleanColumnStatsData(10, 10, 0)
-    stats_obj = ttypes.ColumnStatisticsObj("col4", "boolean", ttypes.ColumnStatisticsData(stats))
+    stats_obj = ttypes.ColumnStatisticsObj(
+        "col4", "boolean", ttypes.ColumnStatisticsData(stats)
+    )
     col_stats = ttypes.ColumnStatistics(stats_desc, [stats_obj])
-    
-    hive_client.update_table_column_statistics(col_stats)
 
+    hive_client.update_table_column_statistics(col_stats)
 
 
 def test_list_databases(hive_client):
@@ -600,7 +599,7 @@ def test_table_stats(hive_client):
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table4")
 
-    statistics = hms.get_table_stats(table, []) 
+    statistics = hms.get_table_stats(table, [])
 
     assert len(statistics) == 1
     assert statistics[0].tableName == "test_table4"
@@ -610,4 +609,3 @@ def test_table_stats(hive_client):
     assert statistics[0].stats.numTrues == 10
     assert statistics[0].stats.numFalses == 10
     assert statistics[0].stats.numNulls == 0
-
