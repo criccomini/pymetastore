@@ -28,10 +28,11 @@ class DoubleTypeStats(TypeStats):
     def __init__(
         self,
         cardinality: int,
+        numNulls: int,
         lowValue: Optional[float] = None,
         highValue: Optional[float] = None,
     ):
-        super().__init__(typeName="double")
+        super().__init__(typeName="double", numNulls=numNulls)
         self.cardinality = cardinality
         self.lowValue = lowValue
         self.highValue = highValue
@@ -46,10 +47,11 @@ class LongTypeStats(TypeStats):
     def __init__(
         self,
         cardinality: int,
+        numNulls: int,
         lowValue: Optional[int] = None,
         highValue: Optional[int] = None,
     ):
-        super().__init__(typeName="long")
+        super().__init__(typeName="long", numNulls=numNulls)
         self.cardinality = cardinality
         self.lowValue = lowValue
         self.highValue = highValue
@@ -61,8 +63,10 @@ class StringTypeStats(TypeStats):
     avgColLen: float
     cardinality: int
 
-    def __init__(self, maxColLen: int, avgColLen: float, cardinality: int):
-        super().__init__(typeName="string")
+    def __init__(
+        self, maxColLen: int, avgColLen: float, cardinality: int, numNulls: int
+    ):
+        super().__init__(typeName="string", numNulls=numNulls)
         self.maxColLen = maxColLen
         self.avgColLen = avgColLen
         self.cardinality = cardinality
@@ -73,8 +77,8 @@ class BinaryTypeStats(TypeStats):
     maxColLen: int
     avgColLen: float
 
-    def __init__(self, maxColLen: int, avgColLen: float):
-        super().__init__(typeName="binary")
+    def __init__(self, maxColLen: int, avgColLen: float, numNulls: int):
+        super().__init__(typeName="binary", numNulls=numNulls)
         self.maxColLen = maxColLen
         self.avgColLen = avgColLen
 
@@ -88,10 +92,11 @@ class DecimalTypeStats(TypeStats):
     def __init__(
         self,
         cardinality: int,
+        numNulls: int,
         lowValue: Optional[float] = None,
         highValue: Optional[float] = None,
     ):
-        super().__init__(typeName="decimal")
+        super().__init__(typeName="decimal", numNulls=numNulls)
         self.cardinality = cardinality
         self.lowValue = lowValue
         self.highValue = highValue
@@ -106,10 +111,11 @@ class DateTypeStats(TypeStats):
     def __init__(
         self,
         cardinality: int,
+        numNulls: int,
         lowValue: Optional[int] = None,
         highValue: Optional[int] = None,
     ):
-        super().__init__(typeName="date")
+        super().__init__(typeName="date", numNulls=numNulls)
         self.cardinality = cardinality
         self.lowValue = lowValue
         self.highValue = highValue

@@ -650,12 +650,12 @@ class HMS:
         column_names = [column.name for column in columns]
 
         results = []
+
         for column in column_names:
             res = self.client.get_table_column_statistics(
                 table.database_name, table.name, column
             )
-
-        results.append(res)
+            results.append(res)
 
         result_columns = []
         for col in results:
@@ -687,6 +687,7 @@ class HMS:
                     c_stats = StringTypeStats(
                         stats.stringStats.avgColLen,
                         stats.stringStats.maxColLen,
+                        stats.stringStats.numDVs,
                         stats.stringStats.numNulls,
                     )
                 elif stats.binaryStats is not None:
@@ -704,6 +705,7 @@ class HMS:
                     )
                 elif stats.dateStats is not None:
                     c_stats = DateTypeStats(
+                        stats.dateStats.numDVs,
                         stats.dateStats.lowValue,
                         stats.dateStats.highValue,
                         stats.dateStats.numNulls,
