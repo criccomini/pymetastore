@@ -692,7 +692,6 @@ class HMS:
                 result_columns.append(result)
         
         return result_columns
-            
 
 
        
