@@ -1,70 +1,103 @@
 from dataclasses import dataclass
-from htypes import HType
 from typing import Optional
 
 @dataclass
 class TypeStats:
-    typeName: str
     numNulls: int
+    typeName: str
 
 @dataclass
 class BooleanTypeStats(TypeStats):
-    typeName: str = "boolean"
     numTrues: int
     numFalses: int
 
+    def __init__(self, numTrues: int, numFalses: int, numNulls: int):
+        super().__init__(numNulls, typeName="boolean")
+        self.numTrues = numTrues
+        self.numFalses = numFalses
+
 @dataclass
 class DoubleTypeStats(TypeStats):
-    typeName: str = "double"
-    lowValue: Optional(float) = None
-    highValue: Optional(float) = None
     cardinality: int
+    lowValue: Optional[float]
+    highValue: Optional[float]
+
+    def __init__(self, cardinality: int, lowValue: Optional[float] = None, highValue: Optional[float] = None):
+        super().__init__(typeName="double")
+        self.cardinality = cardinality
+        self.lowValue = lowValue
+        self.highValue = highValue
 
 @dataclass
 class LongTypeStats(TypeStats):
-    typeName: str = "long"
-    lowValue: Optional(int) = None
-    highValue: Optional(int) = None
     cardinality: int
+    lowValue: Optional[int]
+    highValue: Optional[int]
+
+    def __init__(self, cardinality: int, lowValue: Optional[int] = None, highValue: Optional[int] = None):
+        super().__init__(typeName="long")
+        self.cardinality = cardinality
+        self.lowValue = lowValue
+        self.highValue = highValue
 
 @dataclass
 class StringTypeStats(TypeStats):
-    typeName: str = "string"
     maxColLen: int
     avgColLen: float
     cardinality: int
+
+    def __init__(self, maxColLen: int, avgColLen: float, cardinality: int):
+        super().__init__(typeName="string")
+        self.maxColLen = maxColLen
+        self.avgColLen = avgColLen
+        self.cardinality = cardinality
 
 @dataclass
 class BinaryTypeStats(TypeStats):
-    typeName: str = "binary"
     maxColLen: int
     avgColLen: float
 
+    def __init__(self, maxColLen: int, avgColLen: float):
+        super().__init__(typeName="binary")
+        self.maxColLen = maxColLen
+        self.avgColLen = avgColLen
+
 @dataclass
 class DecimalTypeStats(TypeStats):
-    typeName: str = "decimal"
-    lowValue: Optional(float) = None
-    highValue: Optional(float) = None
     cardinality: int
+    lowValue: Optional[float]
+    highValue: Optional[float]
+
+    def __init__(self, cardinality: int, lowValue: Optional[float] = None, highValue: Optional[float] = None):
+        super().__init__(typeName="decimal")
+        self.cardinality = cardinality
+        self.lowValue = lowValue
+        self.highValue = highValue
 
 @dataclass
 class DateTypeStats(TypeStats):
-    typeName: str = "date"
-    lowValue: Optional(int) = None
-    highValue: Optional(int) = None
     cardinality: int
+    lowValue: Optional[int]
+    highValue: Optional[int]
+
+    def __init__(self, cardinality: int, lowValue: Optional[int] = None, highValue: Optional[int] = None):
+        super().__init__(typeName="date")
+        self.cardinality = cardinality
+        self.lowValue = lowValue
+        self.highValue = highValue
+    
 
 @dataclass
 class ColumnStats:
     isTblLevel: bool
-    dbNmae: str
+    dbName: str
     tableName: str
-    partName: Optional(str) = None
-    lastAnalyzed: Optional(int) = None
-    catName: Optional(str) = None
     columnName: str
-    columnType: HType
-    stats: TypeStats
+    columnType: str
+    stats: Optional[TypeStats] = None # not all column types have stats
+    partName: Optional[str] = None
+    lastAnalyzed: Optional[int] = None
+    catName: Optional[str] = None
 
 
 

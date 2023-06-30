@@ -30,6 +30,7 @@ from pymetastore.metastore import (
     StorageFormat,
 )
 
+from pymetastore.stats import *
 
 @pytest.fixture(scope="module")
 def hive_client():
@@ -196,6 +197,47 @@ def setup_data(hive_client):
     if "test_table3" in hive_client.get_all_tables("test_db"):
         hive_client.drop_table("test_db", "test_table3", True)
     hive_client.create_table(table)
+
+    cols4 = [
+       ttypes.FieldSchema(name="col4", type="boolean", comment="c4") 
+    ]
+
+    storageDesc = ttypes.StorageDescriptor(
+        location="/tmp/test_db/test_table4",
+        cols=cols4,
+        inputFormat="org.apache.hadoop.mapred.TextInputFormat",
+        outputFormat="org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        compressed=False,
+        numBuckets=-1,
+        serdeInfo=serde_info,
+        bucketCols=[],
+    )
+
+    table = ttypes.Table(
+        tableName="test_table4",
+        dbName="test_db",
+        owner="owner",
+        createTime=0,
+        lastAccessTime=0,
+        retention=0,
+        sd=storageDesc,
+        partitionKeys=partitionKeys,
+        parameters={},
+        tableType="EXTERNAL_TABLE",
+    )
+
+    if "test_table4" in hive_client.get_all_tables("test_db"):
+        hive_client.drop_table("test_db", "test_table4", True)
+    hive_client.create_table(table)
+
+    stats_desc = ttypes.ColumnStatisticsDesc(True, "test_db", "test_table4", "col4")
+
+    stats = ttypes.BooleanColumnStatsData(10, 10, 0)
+    stats_obj = ttypes.ColumnStatisticsObj("col4", "boolean", ttypes.ColumnStatisticsData(stats))
+    col_stats = ttypes.ColumnStatistics(stats_desc, [stats_obj])
+    
+    hive_client.update_table_column_statistics(col_stats)
+
 
 
 def test_list_databases(hive_client):
@@ -552,3 +594,20 @@ def test_parameterized_types(hive_client):
     assert isinstance(columns[6].type.types[1], HType)
     assert isinstance(columns[6].type.types[1], HPrimitiveType)
     assert columns[6].type.types[1].name == "STRING"
+
+
+def test_table_stats(hive_client):
+    hms = HMS(hive_client)
+    table = hms.get_table("test_db", "test_table4")
+
+    statistics = hms.get_table_stats(table, []) 
+
+    assert len(statistics) == 1
+    assert statistics[0].tableName == "test_table4"
+    assert statistics[0].dbName == "test_db"
+    assert statistics[0].stats is not None
+    assert isinstance(statistics[0].stats, BooleanTypeStats)
+    assert statistics[0].stats.numTrues == 10
+    assert statistics[0].stats.numFalses == 10
+    assert statistics[0].stats.numNulls == 0
+

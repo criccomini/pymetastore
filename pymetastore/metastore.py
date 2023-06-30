@@ -14,9 +14,17 @@ from .hive_metastore.ttypes import (
     SerDeInfo,
     StorageDescriptor,
     Table,
+    ColumnStatistics,
+    BooleanColumnStatsData,
+    LongColumnStatsData,
+    DoubleColumnStatsData,
+    StringColumnStatsData,
+    BinaryColumnStatsData,
+    DecimalColumnStatsData,
+    DateColumnStatsData
 )
 from .htypes import HType, TypeParser
-
+from .stats import *
 
 class HPrincipalType(Enum):
     ROLE = "ROLE"
@@ -619,6 +627,76 @@ class HMS:
             table.writeId,
             table.owner,
         )
+    
+    def get_table_stats(self, table: HTable, columns:List[HColumn]) -> List[ColumnStats]:
+        
+        assert isinstance(table, HTable)
+        assert isinstance(columns, list)
+        if len(columns) > 0:
+            assert all(isinstance(column, HColumn) for column in columns)
+
+        assert table.name is not None
+        assert table.database_name is not None
+        assert table.columns is not None
+        assert len(table.columns) > 0
+
+        if len(columns) == 0:
+            columns = table.columns
+        else:
+            columns = columns
+        
+        column_names = [column.name for column in columns]
+
+        results = []
+        for column in column_names:
+            res = self.client.get_table_column_statistics(table.database_name, table.name, column)
+
+        results.append(res)
+
+        result_columns = []
+        for col in results:
+            for obj in col.statsObj:
+                name = obj.colName
+                col_type = obj.colType
+                stats = obj.statsData
+
+                
+                if stats.booleanStats is not None:
+                    c_stats = BooleanTypeStats(stats.booleanStats.numTrues, stats.booleanStats.numFalses, stats.booleanStats.numNulls)
+                elif stats.longStats is not None :
+                    c_stats = LongTypeStats(stats.longStats.lowValue, stats.longStats.highValue, stats.longStats.numNulls, stats.longStats.numDVs)
+                elif stats.doubleStats is not None:
+                    c_stats = DoubleTypeStats(stats.doubleStats.lowValue, stats.doubleStats.highValue, stats.doubleStats.numNulls)
+                elif stats.stringStats is not None:
+                    c_stats = StringTypeStats(stats.stringStats.avgColLen, stats.stringStats.maxColLen, stats.stringStats.numNulls)
+                elif stats.binaryStats is not None:
+                    c_stats = BinaryTypeStats(stats.binaryStats.avgColLen, stats.binaryStats.maxColLen, stats.binaryStats.numNulls)
+                elif stats.decimalStats is not None:
+                    c_stats = DecimalTypeStats(stats.decimalStats.lowValue, stats.decimalStats.highValue, stats.decimalStats.numNulls, stats.decimalStats.numDVs)
+                elif stats.dateStats is not None:
+                    c_stats = DateTypeStats(stats.dateStats.lowValue, stats.dateStats.highValue, stats.dateStats.numNulls)
+                else:
+                    c_stats = None
+                print("\n")
+                print(c_stats)
+                result = ColumnStats(catName=col.statsDesc.catName, 
+                                dbName=col.statsDesc.dbName, 
+                                tableName=col.statsDesc.tableName,
+                                partName=col.statsDesc.partName, 
+                                isTblLevel=col.statsDesc.isTblLevel, 
+                                lastAnalyzed=col.statsDesc.lastAnalyzed,
+                                columnName=name,
+                                columnType=col_type,
+                                stats=c_stats
+                                )
+                result_columns.append(result)
+        
+        return result_columns
+            
+
+
+       
+
 
 
 class _HMSConnection:
