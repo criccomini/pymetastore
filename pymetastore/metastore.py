@@ -7,24 +7,25 @@ from thrift.transport import TSocket, TTransport
 
 from .hive_metastore import ThriftHiveMetastore as hms
 from .hive_metastore.ttypes import (
-    BinaryColumnStatsData,
-    BooleanColumnStatsData,
-    ColumnStatistics,
     Database,
-    DateColumnStatsData,
-    DecimalColumnStatsData,
-    DoubleColumnStatsData,
     FieldSchema,
-    LongColumnStatsData,
     Partition,
     PrincipalType,
     SerDeInfo,
     StorageDescriptor,
-    StringColumnStatsData,
     Table,
 )
 from .htypes import HType, TypeParser
-from .stats import *
+from .stats import (
+    BinaryTypeStats,
+    BooleanTypeStats,
+    ColumnStats,
+    DateTypeStats,
+    DecimalTypeStats,
+    DoubleTypeStats,
+    LongTypeStats,
+    StringTypeStats,
+)
 
 
 class HPrincipalType(Enum):
@@ -630,10 +631,13 @@ class HMS:
         )
 
     def get_table_stats(
-        self, table: HTable, columns: List[HColumn]
+        self,
+        table: HTable,
+        columns: List[HColumn],
     ) -> List[ColumnStats]:
         assert isinstance(table, HTable)
         assert isinstance(columns, list)
+
         if len(columns) > 0:
             assert all(isinstance(column, HColumn) for column in columns)
 
@@ -644,16 +648,15 @@ class HMS:
 
         if len(columns) == 0:
             columns = table.columns
-        else:
-            columns = columns
 
         column_names = [column.name for column in columns]
-
         results = []
 
         for column in column_names:
             res = self.client.get_table_column_statistics(
-                table.database_name, table.name, column
+                table.database_name,
+                table.name,
+                column,
             )
             results.append(res)
 
@@ -712,8 +715,7 @@ class HMS:
                     )
                 else:
                     c_stats = None
-                print("\n")
-                print(c_stats)
+
                 result = ColumnStats(
                     catName=col.statsDesc.catName,
                     dbName=col.statsDesc.dbName,
@@ -725,6 +727,7 @@ class HMS:
                     columnType=col_type,
                     stats=c_stats,
                 )
+
                 result_columns.append(result)
 
         return result_columns

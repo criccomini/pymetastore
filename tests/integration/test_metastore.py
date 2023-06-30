@@ -29,7 +29,7 @@ from pymetastore.metastore import (
     HiveBucketProperty,
     StorageFormat,
 )
-from pymetastore.stats import *
+from pymetastore.stats import BooleanTypeStats
 
 
 @pytest.fixture(scope="module")
