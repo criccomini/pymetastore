@@ -669,49 +669,50 @@ class HMS:
 
                 if stats.booleanStats is not None:
                     c_stats = BooleanTypeStats(
-                        stats.booleanStats.numTrues,
-                        stats.booleanStats.numFalses,
-                        stats.booleanStats.numNulls,
+                        numTrues=stats.booleanStats.numTrues,
+                        numFalses=stats.booleanStats.numFalses,
+                        numNulls=stats.booleanStats.numNulls,
                     )
                 elif stats.longStats is not None:
                     c_stats = LongTypeStats(
-                        stats.longStats.lowValue,
-                        stats.longStats.highValue,
-                        stats.longStats.numNulls,
-                        stats.longStats.numDVs,
+                        lowValue=stats.longStats.lowValue,
+                        highValue=stats.longStats.highValue,
+                        numNulls=stats.longStats.numNulls,
+                        cardinality=stats.longStats.numDVs,
                     )
                 elif stats.doubleStats is not None:
                     c_stats = DoubleTypeStats(
-                        stats.doubleStats.lowValue,
-                        stats.doubleStats.highValue,
-                        stats.doubleStats.numNulls,
+                        cardinality=stats.doubleStats.numDVs,
+                        lowValue=stats.doubleStats.lowValue,
+                        highValue=stats.doubleStats.highValue,
+                        numNulls=stats.doubleStats.numNulls,
                     )
                 elif stats.stringStats is not None:
                     c_stats = StringTypeStats(
-                        stats.stringStats.avgColLen,
-                        stats.stringStats.maxColLen,
-                        stats.stringStats.numDVs,
-                        stats.stringStats.numNulls,
+                        avgColLen=stats.stringStats.avgColLen,
+                        maxColLen=stats.stringStats.maxColLen,
+                        cardinality=stats.stringStats.numDVs,
+                        numNulls=stats.stringStats.numNulls,
                     )
                 elif stats.binaryStats is not None:
                     c_stats = BinaryTypeStats(
-                        stats.binaryStats.avgColLen,
-                        stats.binaryStats.maxColLen,
-                        stats.binaryStats.numNulls,
+                        avgColLen=stats.binaryStats.avgColLen,
+                        maxColLen=stats.binaryStats.maxColLen,
+                        numNulls=stats.binaryStats.numNulls,
                     )
                 elif stats.decimalStats is not None:
                     c_stats = DecimalTypeStats(
-                        stats.decimalStats.lowValue,
-                        stats.decimalStats.highValue,
-                        stats.decimalStats.numNulls,
-                        stats.decimalStats.numDVs,
+                        lowValue=stats.decimalStats.lowValue,
+                        highValue=stats.decimalStats.highValue,
+                        numNulls=stats.decimalStats.numNulls,
+                        cardinality=stats.decimalStats.numDVs,
                     )
                 elif stats.dateStats is not None:
                     c_stats = DateTypeStats(
-                        stats.dateStats.numDVs,
-                        stats.dateStats.lowValue,
-                        stats.dateStats.highValue,
-                        stats.dateStats.numNulls,
+                        cardinality=stats.dateStats.numDVs,
+                        lowValue=stats.dateStats.lowValue,
+                        highValue=stats.dateStats.highValue,
+                        numNulls=stats.dateStats.numNulls,
                     )
                 else:
                     c_stats = None
