@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+from pymetastore.hive_metastore import ttypes
 
 
 @dataclass
@@ -93,8 +94,8 @@ class DecimalTypeStats(TypeStats):
         self,
         cardinality: int,
         numNulls: int,
-        lowValue: Optional[float] = None,
-        highValue: Optional[float] = None,
+        lowValue: Optional[ttypes.Decimal] = None,
+        highValue: Optional[ttypes.Decimal] = None,
     ):
         super().__init__(typeName="decimal", numNulls=numNulls)
         self.cardinality = cardinality
@@ -105,8 +106,8 @@ class DecimalTypeStats(TypeStats):
 @dataclass
 class DateTypeStats(TypeStats):
     cardinality: int
-    lowValue: Optional[int]
-    highValue: Optional[int]
+    lowValue: Optional[ttypes.Date]
+    highValue: Optional[ttypes.Date]
 
     def __init__(
         self,

@@ -17,6 +17,7 @@ from pymetastore.htypes import (
     HTypeCategory,
     HUnionType,
     HVarcharType,
+    PrimitiveCategory
 )
 from pymetastore.metastore import (
     HMS,
@@ -29,7 +30,7 @@ from pymetastore.metastore import (
     HiveBucketProperty,
     StorageFormat,
 )
-from pymetastore.stats import BooleanTypeStats
+from pymetastore.stats import BooleanTypeStats, DoubleTypeStats, LongTypeStats, DecimalTypeStats, DateTypeStats, StringTypeStats, BinaryTypeStats
 
 
 @pytest.fixture(scope="module")
@@ -198,7 +199,14 @@ def setup_data(hive_client):
         hive_client.drop_table("test_db", "test_table3", True)
     hive_client.create_table(table)
 
-    cols4 = [ttypes.FieldSchema(name="col4", type="boolean", comment="c4")]
+    cols4 = [ttypes.FieldSchema(name="col4", type="boolean", comment="c4"),
+             ttypes.FieldSchema(name="col5", type="double", comment="c5"),
+              ttypes.FieldSchema(name="col6", type="bigint", comment="c6"),
+             ttypes.FieldSchema(name="col7", type="string", comment="c7"),
+             ttypes.FieldSchema(name="col8", type="binary", comment="c8"),
+             ttypes.FieldSchema(name="col9", type="decimal(10,2)", comment="c9"),
+             ttypes.FieldSchema(name="col10", type="date", comment="c10")]
+
 
     storageDesc = ttypes.StorageDescriptor(
         location="/tmp/test_db/test_table4",
@@ -228,16 +236,48 @@ def setup_data(hive_client):
         hive_client.drop_table("test_db", "test_table4", True)
     hive_client.create_table(table)
 
-    stats_desc = ttypes.ColumnStatisticsDesc(True, "test_db", "test_table4", "col4")
+    stats_desc = ttypes.ColumnStatisticsDesc(True, "test_db", "test_table4")
 
-    stats = ttypes.BooleanColumnStatsData(10, 10, 0)
-    stats_obj = ttypes.ColumnStatisticsObj(
-        "col4", "boolean", ttypes.ColumnStatisticsData(stats)
+    stats_bool = ttypes.BooleanColumnStatsData(numTrues=10, numFalses=10, numNulls=0)
+    stats_obj_bool = ttypes.ColumnStatisticsObj(
+        "col4", "boolean", ttypes.ColumnStatisticsData(booleanStats=stats_bool)
     )
-    col_stats = ttypes.ColumnStatistics(stats_desc, [stats_obj])
 
+    stats_double = ttypes.DoubleColumnStatsData(lowValue=0, highValue=1, numNulls=0, numDVs=100)
+    stats_obj_double = ttypes.ColumnStatisticsObj(
+        "col5", "double", ttypes.ColumnStatisticsData(doubleStats=stats_double))
+    
+    stats_long = ttypes.LongColumnStatsData(lowValue=0, highValue=1, numNulls=0, numDVs=100)
+    stats_obj_long = ttypes.ColumnStatisticsObj(
+        "col6", "long", ttypes.ColumnStatisticsData(longStats=stats_long))
+    
+    stats_string = ttypes.StringColumnStatsData(avgColLen=10, maxColLen=10, numNulls=5, numDVs=10)
+    stats_obj_string = ttypes.ColumnStatisticsObj(
+        "col7", "string", ttypes.ColumnStatisticsData(stringStats=stats_string))
+    
+    stats_binary = ttypes.BinaryColumnStatsData(avgColLen=10, maxColLen=10, numNulls=5)
+    stats_obj_binary = ttypes.ColumnStatisticsObj(
+        "col8", "binary", ttypes.ColumnStatisticsData(binaryStats=stats_binary))
+    
+    stats_decimal = ttypes.DecimalColumnStatsData(lowValue=ttypes.Decimal(1, b"123445.3"), highValue=ttypes.Decimal(1, b"1232324124"), numNulls=0, numDVs=100)
+    stats_obj_decimal = ttypes.ColumnStatisticsObj(
+        "col9", "decimal(10,2)", ttypes.ColumnStatisticsData(decimalStats=stats_decimal))
+    
+    stats_date = ttypes.DateColumnStatsData(lowValue=ttypes.Date(0), highValue=ttypes.Date(1), numNulls=0, numDVs=100)
+    stats_obj_date = ttypes.ColumnStatisticsObj(
+        "col10", "date", ttypes.ColumnStatisticsData(dateStats=stats_date))
+
+    col_stats = ttypes.ColumnStatistics(stats_desc, [stats_obj_bool, 
+                                                     stats_obj_double, 
+                                                     stats_obj_long, 
+                                                     stats_obj_string, 
+                                                     stats_obj_binary, 
+                                                     stats_obj_decimal, 
+                                                     stats_obj_date])
+    
     hive_client.update_table_column_statistics(col_stats)
-
+    
+    
 
 def test_list_databases(hive_client):
     assert "test_db" in HMS(hive_client).list_databases()
@@ -600,13 +640,49 @@ def test_table_stats(hive_client):
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table4")
 
-    statistics = hms.get_table_stats(table, [])
+    statistics = hms.get_table_stats(table, [HColumn("col4", HPrimitiveType(PrimitiveCategory.BOOLEAN)), 
+                                             HColumn("col5", HPrimitiveType(PrimitiveCategory.DOUBLE)),
+                                             HColumn("col7", HPrimitiveType(PrimitiveCategory.STRING)),
+                                             HColumn("col8", HPrimitiveType(PrimitiveCategory.BINARY)),
+                                             HColumn("col9", HDecimalType(1,1)),
+                                             HColumn("col10", HPrimitiveType(PrimitiveCategory.DATE)),])
 
-    assert len(statistics) == 1
+    assert len(statistics) == 6
     assert statistics[0].tableName == "test_table4"
     assert statistics[0].dbName == "test_db"
     assert statistics[0].stats is not None
+    
     assert isinstance(statistics[0].stats, BooleanTypeStats)
     assert statistics[0].stats.numTrues == 10
     assert statistics[0].stats.numFalses == 10
     assert statistics[0].stats.numNulls == 0
+
+    assert isinstance(statistics[1].stats, DoubleTypeStats)
+    assert statistics[1].stats.lowValue == 0
+    assert statistics[1].stats.highValue == 1
+    assert statistics[1].stats.numNulls == 0
+    assert statistics[1].stats.cardinality == 100
+
+    assert isinstance(statistics[2].stats, StringTypeStats)
+    assert statistics[2].stats.avgColLen == 10
+    assert statistics[2].stats.maxColLen == 10
+    assert statistics[2].stats.numNulls == 5
+    assert statistics[2].stats.cardinality == 10
+
+    assert isinstance(statistics[3].stats, BinaryTypeStats)
+    assert statistics[3].stats.avgColLen == 10
+    assert statistics[3].stats.maxColLen == 10
+    assert statistics[3].stats.numNulls == 5
+
+    assert isinstance(statistics[4].stats, DecimalTypeStats)
+    assert statistics[4].stats.lowValue == ttypes.Decimal(scale=1, unscaled=b'123445.3')
+    assert statistics[4].stats.highValue == ttypes.Decimal(1, b"1232324124")
+    assert statistics[4].stats.numNulls == 0
+    assert statistics[4].stats.cardinality == 100
+
+    assert isinstance(statistics[5].stats, DateTypeStats)
+    assert statistics[5].stats.lowValue == ttypes.Date(0)
+    assert statistics[5].stats.highValue == ttypes.Date(1)
+    assert statistics[5].stats.numNulls == 0
+    assert statistics[5].stats.cardinality == 100
+
