@@ -275,9 +275,10 @@ def test_get_table(hive_client):
     assert isinstance(table.partition_columns[0], HColumn)
     assert isinstance(table.parameters, dict)
     assert len(table.parameters) == 1
+    # this is not a parameter of the table we created, but the metastore adds it
     assert (
         table.parameters.get("transient_lastDdlTime") is not None
-    )  # this is not a parameter of the table we created, but the metastore adds it
+    )  
     # This assertion fails, I leave it here on purpose. My current assumption is that
     # the metastore overrides some of the passed options with defaults. "MANAGEd_TABLE"
     # is the default value for tableType. See here for the defaults:
