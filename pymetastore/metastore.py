@@ -633,14 +633,14 @@ class HMS:
     def get_table_stats(
         self,
         table: HTable,
-        columns: List[HColumn],
+        columns: List[HColumn] | None = None,
     ) -> List[ColumnStats]:
-        assert isinstance(table, HTable)
-        assert isinstance(columns, list)
+        columns = columns or []
 
         if len(columns) > 0:
             assert all(isinstance(column, HColumn) for column in columns)
 
+        assert isinstance(table, HTable)
         assert table.name is not None
         assert table.database_name is not None
         assert table.columns is not None
