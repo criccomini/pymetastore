@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+
 from pymetastore.hive_metastore import ttypes
 
 
