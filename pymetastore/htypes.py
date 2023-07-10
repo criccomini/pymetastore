@@ -1,9 +1,17 @@
+"""
+htypes module contains the Hive metastore types, including primitive and complex types.
+User defined types are defined by the user, using a combination of complex 
+and primitive types and thus are not included in this module.
+there are also some helper functions to convert between Hive metastore types and HType objects.
+"""
 from collections import namedtuple
 from enum import Enum
 from typing import Any, List, Optional
 
 
 class PrimitiveCategory(Enum):
+    """An Enumeration holding all the primitive types supported by Hive."""
+
     VOID = "VOID"
     BOOLEAN = "BOOLEAN"
     BYTE = "BYTE"
@@ -26,6 +34,11 @@ class PrimitiveCategory(Enum):
 
 
 class HTypeCategory(Enum):
+    """
+    An Enumeration holding all the complex types supported by Hive plus
+    the primitive types.
+    """
+
     PRIMITIVE = PrimitiveCategory
     STRUCT = "STRUCT"
     MAP = "MAP"
@@ -34,6 +47,11 @@ class HTypeCategory(Enum):
 
 
 class HType:
+    """
+    The base class for all Hive metastore types.
+    It contains the name of the type and the category of the type.
+    """
+
     def __init__(self, name: str, category: HTypeCategory):
         self.name = name
         self.category = category
@@ -47,11 +65,15 @@ class HType:
     def __eq__(self, other):
         if isinstance(other, HType):
             return (self.name == other.name) and (self.category == other.category)
-        else:
-            return False
+        return False
 
 
 class HPrimitiveType(HType):
+    """
+    A class representing a primitive type in Hive metastore.
+    It is initialized by passing a PrimitiveCategory enum value.
+    """
+
     def __init__(self, primitive_type: PrimitiveCategory):
         super().__init__(primitive_type.value, HTypeCategory.PRIMITIVE)
         self.primitive_type = primitive_type
@@ -64,6 +86,11 @@ class HPrimitiveType(HType):
 
 
 class HMapType(HType):
+    """
+    A class representing a map type in Hive metastore.
+    It is initialized by passing two lists. A list of field names and a list of field types.
+    """
+
     def __init__(self, key_type: HType, value_type: HType):
         super().__init__("MAP", HTypeCategory.MAP)
         self.key_type = key_type
@@ -82,11 +109,15 @@ class HMapType(HType):
                 and (self.key_type == other.key_type)
                 and (self.value_type == other.value_type)
             )
-        else:
-            return False
+        return False
 
 
 class HListType(HType):
+    """
+    A class representing a List or array type in Hive metastore.
+    It is initialized by passing the element type of the list.
+    """
+
     def __init__(self, element_type: HType):
         super().__init__("LIST", HTypeCategory.LIST)
         self.element_type = element_type
@@ -100,11 +131,15 @@ class HListType(HType):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return super().__eq__(other) and (self.element_type == other.element_type)
-        else:
-            return False
+        return False
 
 
 class HUnionType(HType):
+    """
+    A class representing a Union type in Hive metastore.
+    It is initialized by passing a list of types.
+    """
+
     def __init__(self, types: List[HType]):
         super().__init__("UNION", HTypeCategory.UNION)
         self.types = types
@@ -118,11 +153,16 @@ class HUnionType(HType):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return super().__eq__(other) and (self.types == other.types)
-        else:
-            return False
+        return False
 
 
 class HVarcharType(HType):
+    """
+    A class representing a Varchar type in Hive metastore.
+    Varchar is primitive but parameterized by length.
+    Varchar by definition has a maximum length of 65535.
+    """
+
     def __init__(self, length: int):
         MAX_VARCHAR_LENGTH = 65535
         if length > MAX_VARCHAR_LENGTH:
@@ -139,11 +179,16 @@ class HVarcharType(HType):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return super().__eq__(other) and (self.length == other.length)
-        else:
-            return False
+        return False
 
 
 class HCharType(HType):
+    """
+    A class representing a Char type in Hive metastore.
+    Char is primitive but parameterized by length.
+    Char by definition has a maximum length of 255.
+    """
+
     def __init__(self, length: int):
         MAX_CHAR_LENGTH = 255
         if length > MAX_CHAR_LENGTH:
@@ -160,11 +205,16 @@ class HCharType(HType):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return super().__eq__(other) and (self.length == other.length)
-        else:
-            return False
+        return False
 
 
 class HDecimalType(HType):
+    """
+    A class representing a Decimal type in Hive metastore.
+    Decimal is primitive but parameterized by precision and scale.
+    Decimal by definition has a maximum precision and scale of 38.
+    """
+
     def __init__(self, precision: int, scale: int):
         MAX_PRECISION = 38
         MAX_SCALE = 38
@@ -189,11 +239,15 @@ class HDecimalType(HType):
                 and (self.precision == other.precision)
                 and (self.scale == other.scale)
             )
-        else:
-            return False
+        return False
 
 
 class HStructType(HType):
+    """
+    A class representing a Struct type in Hive metastore.
+    Struct is parameterized by a list of names and types.
+    """
+
     def __init__(self, names: List[str], types: List[HType]):
         if len(names) != len(types):
             raise ValueError("mismatched size of names and types.")
@@ -219,13 +273,17 @@ class HStructType(HType):
                 and (self.names == other.names)
                 and (self.types == other.types)
             )
-        else:
-            return False
+        return False
 
 
 # We need to maintain a list of the expected serialized type names.
 # Thrift will return the type in string format and we will have to parse it to get the type.
 class SerdeTypeNameConstants(Enum):
+    """
+    Serde TypeNameConstants is an enum class that contains the list of expected type names
+    as they are used by Thrift.
+    """
+
     # Primitive types
     VOID = "void"
     BOOLEAN = "boolean"
@@ -277,21 +335,27 @@ primitive_to_serde_mapping = {
     PrimitiveCategory.UNKNOWN: SerdeTypeNameConstants.UNKNOWN,
 }
 
-# We also need the inverse though.
+""" We also need the inverse though.
+"""
 serde_to_primitive_mapping = {v.name: k for k, v in primitive_to_serde_mapping.items()}
 
+""" This function gets us the serde type name from the primitive one."""
 
-# This function gets us the serde type name from the primitive one.
+
 def primitive_to_serde(primitive_category: PrimitiveCategory) -> SerdeTypeNameConstants:
     return primitive_to_serde_mapping[primitive_category]
 
 
-# This function gets us the primitive type name from the serde one.
+""" This function gets us the primitive type name from the serde one."""
+
+
 def serde_to_primitive(serde_type_name: str) -> Optional[PrimitiveCategory]:
     return serde_to_primitive_mapping.get(serde_type_name)
 
 
-# We also need a way to get the serde enum key from the string we get from Thrift.
+"""This function returns the serde enum key from the string we get from Thrift"""
+
+
 def get_serde_type_by_value(value):
     for member in SerdeTypeNameConstants:
         if member.value == value:
@@ -299,8 +363,12 @@ def get_serde_type_by_value(value):
     return None
 
 
-# To be used for tokening the Thrift type string. We need to tokenize the
-# string to get the type name and the type parameters.
+"""
+To be used for tokening the Thrift type string. We need to tokenize the
+string to get the type name and the type parameters.
+"""
+
+
 class Token(namedtuple("Token", ["position", "text", "type"])):
     def __new__(cls, position: int, text: str, type_: bool) -> Any:
         if text is None:
@@ -323,9 +391,12 @@ class PrimitiveParts(namedtuple("PrimitiveParts", ["type_name", "type_params"]))
         return f"{self.type_name}:{self.type_params}"
 
 
-# Util functions to parse the Thrift column types (as strings) and return the
-# expected hive type
 class TypeParser:
+    """
+    Util functions to parse the Thrift column types (as strings) and return the
+    expected hive type
+    """
+
     def __init__(self, type_info_string: str):
         self.type_string = type_info_string
         self.type_tokens = self.tokenize(type_info_string)
