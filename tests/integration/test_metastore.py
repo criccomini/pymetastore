@@ -247,9 +247,9 @@ def setup_data(hive_client):
     stats_obj_double = ttypes.ColumnStatisticsObj(
         "col5", "double", ttypes.ColumnStatisticsData(doubleStats=stats_double))
     
-    stats_long = ttypes.LongColumnStatsData(lowValue=0, highValue=1, numNulls=0, numDVs=100)
+    stats_long = ttypes.LongColumnStatsData(lowValue=0, highValue=100, numNulls=0, numDVs=100)
     stats_obj_long = ttypes.ColumnStatisticsObj(
-        "col6", "long", ttypes.ColumnStatisticsData(longStats=stats_long))
+        "col6", "bigint", ttypes.ColumnStatisticsData(longStats=stats_long))
     
     stats_string = ttypes.StringColumnStatsData(avgColLen=10, maxColLen=10, numNulls=5, numDVs=10)
     stats_obj_string = ttypes.ColumnStatisticsObj(
@@ -645,9 +645,10 @@ def test_table_stats(hive_client):
                                              HColumn("col7", HPrimitiveType(PrimitiveCategory.STRING)),
                                              HColumn("col8", HPrimitiveType(PrimitiveCategory.BINARY)),
                                              HColumn("col9", HDecimalType(1,1)),
-                                             HColumn("col10", HPrimitiveType(PrimitiveCategory.DATE)),])
+                                             HColumn("col10", HPrimitiveType(PrimitiveCategory.DATE)),
+                                             HColumn("col6", HPrimitiveType(PrimitiveCategory.LONG)),])
 
-    assert len(statistics) == 6
+    assert len(statistics) == 7
     assert statistics[0].tableName == "test_table4"
     assert statistics[0].dbName == "test_db"
     assert statistics[0].stats is not None
@@ -685,4 +686,10 @@ def test_table_stats(hive_client):
     assert statistics[5].stats.highValue == ttypes.Date(1)
     assert statistics[5].stats.numNulls == 0
     assert statistics[5].stats.cardinality == 100
+
+    assert isinstance(statistics[6].stats, LongTypeStats)
+    assert statistics[6].stats.lowValue == 0
+    assert statistics[6].stats.highValue == 100
+    assert statistics[6].stats.numNulls == 0
+    assert statistics[6].stats.cardinality == 100
 
