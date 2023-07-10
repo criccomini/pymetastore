@@ -88,8 +88,8 @@ class BinaryTypeStats(TypeStats):
 @dataclass
 class DecimalTypeStats(TypeStats):
     cardinality: int
-    lowValue: Optional[float]
-    highValue: Optional[float]
+    lowValue: Optional[ttypes.Decimal]
+    highValue: Optional[ttypes.Decimal]
 
     def __init__(
         self,
@@ -114,8 +114,8 @@ class DateTypeStats(TypeStats):
         self,
         cardinality: int,
         numNulls: int,
-        lowValue: Optional[int] = None,
-        highValue: Optional[int] = None,
+        lowValue: Optional[ttypes.Date] = None,
+        highValue: Optional[ttypes.Date] = None,
     ):
         super().__init__(typeName="date", numNulls=numNulls)
         self.cardinality = cardinality
