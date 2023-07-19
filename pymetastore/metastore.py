@@ -332,8 +332,8 @@ class HMS:
             if partition.sd.serdeInfo.parameters is None
             else partition.sd.serdeInfo.parameters
         )
-        catName = "" if partition.catName is None else partition.catName
-        writeId = -1 if partition.writeId is None else partition.writeId
+        cat_name = "" if partition.catName is None else partition.catName
+        write_id = -1 if partition.writeId is None else partition.writeId
         last_access_time = (
             -1 if partition.lastAccessTime is None else partition.lastAccessTime
         )
@@ -350,8 +350,8 @@ class HMS:
         assert isinstance(num_buckets, int)
         assert isinstance(location, str)
         assert isinstance(serde_parameters, dict)
-        assert isinstance(catName, str)
-        assert isinstance(writeId, int)
+        assert isinstance(cat_name, str)
+        assert isinstance(write_id, int)
         assert isinstance(last_access_time, int)
         assert isinstance(partition_parameters, dict)
         assert isinstance(create_time, int)
@@ -380,8 +380,8 @@ class HMS:
             create_time,
             last_access_time,
             sd,
-            catName,
-            writeId,
+            cat_name,
+            write_id,
         )
 
         return result_partition
@@ -401,7 +401,7 @@ class HMS:
                             if column.type is not None:
                                 type_parser = TypeParser(column.type)
                             else:
-                                raise TypeError(f"Expected type to be str, got None")
+                                raise TypeError("Expected type to be str, got None")
                             if column.comment is not None:
                                 comment = column.comment
                             else:
@@ -409,7 +409,7 @@ class HMS:
                             if column.name is not None:
                                 name = column.name
                             else:
-                                raise TypeError(f"Expected name to be str, got None")
+                                raise TypeError("Expected name to be str, got None")
                             partition_columns.append(
                                 HColumn(name, type_parser.parse_type(), comment)
                             )
@@ -424,9 +424,7 @@ class HMS:
                                 if column.type is not None:
                                     type_parser = TypeParser(column.type)
                                 else:
-                                    raise TypeError(
-                                        f"Expected type to be str, got None"
-                                    )
+                                    raise TypeError("Expected type to be str, got None")
                                 if column.comment is not None:
                                     comment = column.comment
                                 else:
@@ -434,9 +432,7 @@ class HMS:
                                 if column.name is not None:
                                     name = column.name
                                 else:
-                                    raise TypeError(
-                                        f"Expected name to be str, got None"
-                                    )
+                                    raise TypeError("Expected name to be str, got None")
                                 columns.append(
                                     HColumn(name, type_parser.parse_type(), comment)
                                 )
@@ -459,7 +455,7 @@ class HMS:
                         f"Expected serdeInfo to be SerDeInfo, got {type(table.sd.serdeInfo)}"
                     )
             else:
-                raise TypeError(f"Expected serdeInfo to be SerDeInfo, got None")
+                raise TypeError("Expected serdeInfo to be SerDeInfo, got None")
 
             if table.sd.inputFormat is not None:
                 if isinstance(table.sd.inputFormat, str):
@@ -469,7 +465,7 @@ class HMS:
                         f"Expected inputFormat to be str, got {type(table.sd.inputFormat)}"
                     )
             else:
-                raise TypeError(f"Expected inputFormat to be str, got None")
+                raise TypeError("Expected inputFormat to be str, got None")
 
             if table.sd.outputFormat is not None:
                 if isinstance(table.sd.outputFormat, str):
@@ -479,7 +475,7 @@ class HMS:
                         f"Expected outputFormat to be str, got {type(table.sd.outputFormat)}"
                     )
             else:
-                raise TypeError(f"Expected outputFormat to be str, got None")
+                raise TypeError("Expected outputFormat to be str, got None")
 
             storage_format = StorageFormat(serde, input_format, output_format)
 

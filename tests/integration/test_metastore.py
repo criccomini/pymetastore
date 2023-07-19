@@ -33,11 +33,35 @@ from pymetastore.metastore import (
     HiveBucketProperty,
     StorageFormat,
 )
-from pymetastore.stats import *
+from pymetastore.stats import (
+    BinaryTypeStats,
+    BooleanTypeStats,
+    DateTypeStats,
+    DecimalTypeStats,
+    DoubleTypeStats,
+    LongTypeStats,
+    StringTypeStats,
+)
 
 
 @pytest.fixture(scope="module")
 def hive_client():
+    """
+    Create a connection to the Hive Metastore.
+
+    This function opens a connection to the Hive Metastore on a specified host and port.
+    The host and port can be defined in environment variables HMS_HOST and HMS_PORT.
+    If not defined, it defaults to "localhost" and 9083, respectively.
+
+    The function uses a context manager (via the `yield` keyword) to ensure that the
+    transport connection is properly closed after use.
+
+    Yields:
+        client: A handle to the Hive Metastore client.
+
+    Raises:
+        TTransportException: If a connection to the Hive Metastore cannot be established.
+    """
     host = os.environ.get("HMS_HOST", "localhost")
     port = int(os.environ.get("HMS_PORT", 9083))
     transport = TSocket.TSocket(host, port)
@@ -52,7 +76,20 @@ def hive_client():
 
 
 @pytest.fixture(scope="module", autouse=True)
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-locals
+# pylint: disable=invalid-name
 def setup_data(hive_client):
+    """
+    Set up initial data for testing the core functionality of pymetastore.
+
+    This function creates a test database, several test tables, and partitions for
+    these tables in the Hive metastore. It tests various data types, including
+    primitive types, parameterized types, and table statistics.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+    """
     db = ttypes.Database(
         name="test_db",
         description="This is a test database",
@@ -299,11 +336,36 @@ def setup_data(hive_client):
     hive_client.update_table_column_statistics(col_stats)
 
 
+# pylint: disable=redefined-outer-name
 def test_list_databases(hive_client):
+    """
+    Test the functionality of listing all databases.
+
+    This function retrieves all databases and checks that the database "test_db" is present.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If "test_db" is not found in the list of databases.
+    """
     assert "test_db" in HMS(hive_client).list_databases()
 
 
+# pylint: disable=redefined-outer-name
 def test_get_database(hive_client):
+    """
+    Test the functionality of retrieving database metadata.
+
+    This function retrieves the database "test_db" and checks that the properties
+    of the database match the expected values.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the properties of the fetched database do not match the expected values.
+    """
     hms = HMS(hive_client)
     database = hms.get_database("test_db")
     assert isinstance(database, HDatabase)
@@ -312,7 +374,20 @@ def test_get_database(hive_client):
     assert database.owner_name == "owner"
 
 
+# pylint: disable=redefined-outer-name
 def test_list_tables(hive_client):
+    """
+    Test the functionality of listing all tables in a database.
+
+    This function retrieves all tables from the database "test_db" and checks
+    that the table "test_table" is present.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If "test_table" is not found in the list of tables in "test_db".
+    """
     hms = HMS(hive_client)
     tables = hms.list_tables("test_db")
     assert isinstance(tables, list)
@@ -320,7 +395,21 @@ def test_list_tables(hive_client):
 
 
 @pytest.mark.xfail(reason="'table_type' is coming back MANAGED_TABLE.")
+# pylint: disable=redefined-outer-name
 def test_get_table(hive_client):
+    """
+    Test the functionality of retrieving table metadata.
+
+    This function retrieves the table "test_table" from the database "test_db" and
+    checks that the properties of the table match the expected values. This includes
+    checks on the table name, owner, location, columns, and table type.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the properties of the fetched table do not match the expected values.
+    """
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table")
     assert isinstance(table, HTable)
@@ -347,7 +436,21 @@ def test_get_table(hive_client):
     assert table.table_type == "EXTERNAL_TABLE"
 
 
+# pylint: disable=redefined-outer-name
 def test_get_table_columns(hive_client):
+    """
+    Test the functionality of retrieving table columns, including those defined for partitioning.
+
+    This function retrieves the table "test_table" from the database "test_db" and
+    fetches the column and partition column definitions. It then checks that the types
+    and properties of the columns are correctly recognized and are of the expected types.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the column types or properties do not match the expected values.
+    """
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table")
     columns = table.columns
@@ -375,7 +478,20 @@ def test_get_table_columns(hive_client):
     assert partition_columns[0].comment == ""
 
 
+# pylint: disable=redefined-outer-name
 def test_list_columns(hive_client):
+    """
+    Test the functionality of listing all column names of a table.
+
+    This function retrieves all column names from the table "test_table" in the database
+    "test_db". It then checks that the names of the returned columns are as expected.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the names of the fetched columns do not match the expected values.
+    """
     hms = HMS(hive_client)
     columns = hms.list_columns("test_db", "test_table")
 
@@ -385,7 +501,20 @@ def test_list_columns(hive_client):
     assert columns[1] == "col2"
 
 
+# pylint: disable=redefined-outer-name
 def test_list_partitions(hive_client):
+    """
+    Test the functionality of listing all partitions of a table.
+
+    This function retrieves all partition names from the table "test_table" in the database
+    "test_db". It then checks that all expected partitions are found.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If not all expected partitions are found.
+    """
     hms = HMS(hive_client)
     partitions = hms.list_partitions("test_db", "test_table")
 
@@ -395,7 +524,22 @@ def test_list_partitions(hive_client):
         assert f"partition={i}" in partitions
 
 
+# pylint: disable=redefined-outer-name
 def test_get_partitions(hive_client):
+    """
+    Test the functionality of retrieving all partitions of a table.
+
+    This function retrieves all partitions from the table "test_table" in the database
+    "test_db". It then checks that the properties of each returned partition are as
+    expected and that all expected partitions are found.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the properties of the fetched partitions do not match the
+        expected values, or if not all expected partitions are found.
+    """
     hms = HMS(hive_client)
     partitions = hms.get_partitions("test_db", "test_table")
     expected_storage = HStorage(
@@ -435,7 +579,21 @@ def test_get_partitions(hive_client):
     assert missing_partitions == set()
 
 
+# pylint: disable=redefined-outer-name
 def test_get_partition(hive_client):
+    """
+    Test the functionality of retrieving a single partition.
+
+    This function retrieves a specific partition "partition=1" from the table
+    "test_table" in the database "test_db". It then checks that the properties
+    of the returned partition are as expected.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the properties of the fetched partition do not match the expected values.
+    """
     hms = HMS(hive_client)
     partition = hms.get_partition("test_db", "test_table", "partition=1")
     expected_storage = HStorage(
@@ -467,7 +625,22 @@ def test_get_partition(hive_client):
     assert partition.write_id == -1
 
 
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-statements
 def test_primitive_types(hive_client):
+    """
+    Test the functionality of handling primitive types.
+
+    This function retrieves the table "test_table2" from the database "test_db" and
+    fetches the column definitions. It then checks that the types and properties
+    of the columns are correctly recognized and are of the expected primitive types.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the column types or properties do not match the expected values.
+    """
     hms = HMS(hive_client)
 
     table = hms.get_table("test_db", "test_table2")
@@ -567,7 +740,22 @@ def test_primitive_types(hive_client):
     assert columns[12].comment == "c15"
 
 
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-statements
 def test_parameterized_types(hive_client):
+    """
+    Test the functionality of handling parameterized types.
+
+    This function retrieves the table "test_table3" from the database "test_db" and
+    fetches the column definitions. It then checks that the types and properties
+    of the columns are correctly recognized and are of the expected types.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the column types or properties do not match the expected values.
+    """
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table3")
     columns = table.columns
@@ -654,7 +842,21 @@ def test_parameterized_types(hive_client):
     assert columns[6].type.types[1].name == "STRING"
 
 
+# pylint: disable=redefined-outer-name
 def test_table_stats(hive_client):
+    """
+    Test the table statistics fetching functionality of the HMS class.
+
+    This function retrieves the table "test_table4" from the database "test_db" and
+    then fetches the statistics for seven columns of different types. The function
+    checks that the returned statistics are correct and of the expected types.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the fetched statistics are not as expected.
+    """
     hms = HMS(hive_client)
     table = hms.get_table("test_db", "test_table4")
 
