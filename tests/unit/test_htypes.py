@@ -495,6 +495,7 @@ def test_htype_str_repr():
     assert clone == ex
 
 
+# pylint: disable=line-too-long
 def test_hmap_type_str_repr_and_eq():
     typ = HMapType(
         HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT)
@@ -513,6 +514,7 @@ def test_hmap_type_str_repr_and_eq():
     assert clone == typ
 
 
+# pylint: disable=line-too-long
 def test_hlist_type_str_repr_and_eq():
     _type = HListType(HPrimitiveType(PrimitiveCategory.INT))
     assert isinstance(_type, HListType)
@@ -526,6 +528,7 @@ def test_hlist_type_str_repr_and_eq():
     assert clone == _type
 
 
+# pylint: disable=line-too-long
 def test_hunion_type_str_repr_and_eq():
     _type = HUnionType(
         [
@@ -577,6 +580,7 @@ def test_hdecimal_type_str_repr_and_eq():
     assert clone == _type
 
 
+# pylint: disable=line-too-long
 def test_hstruct_type_str_repr_and_eq():
     _type = HStructType(
         ["name", "age"],
