@@ -13,6 +13,27 @@ dependencies = [
 requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
+keywords = [
+    "data",
+    "data catalog",
+    "data discovery",
+    "data engineering",
+    "data governance",
+    "data infrastructure",
+    "data integration",
+    "data pipelines",
+    "hcatalog",
+    "hive",
+    "hive metastore",
+    "metadata",
+    "metastore",
+    "thrift",
+    "python",
+    "recap",
+]
+
+[project.urls]
+repository = "https://github.com/recap-cloud/pymetastore"
 
 [build-system]
 requires = ["pdm-backend"]
