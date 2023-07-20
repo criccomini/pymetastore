@@ -1,7 +1,7 @@
 
 [project]
 name = "pymetastore"
-version = "0.4.1"
+version = "0.4.2"
 description = "A Python client for the Thrift interface to Hive Metastore"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
