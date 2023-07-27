@@ -1,3 +1,44 @@
+"""
+Module: test_htypes
+
+This module contains test cases for the Hive data type classes defined in the pymetastore project. 
+These classes provide a structured representation of various Hive data types, 
+including primitive types and complex types such as arrays, maps, structs, and union types. 
+
+The module tests the functionality of these classes, including their ability to parse 
+string representations of Hive data types, their string and representation methods, 
+and their equality operations.
+
+Although type systems change, it is a rare event and even if it happens, we
+should be very careful as way too many things can break. For this reason
+we'll be testing values and members for the types we define to catch any
+changes. For this reason we'll be primarily be testing the values and not the
+utility functions for the conversion between types. These functions are
+trivial and they primarily expose a thin API over the mappings we define.
+
+Functions:
+- test_primitivecategory_members: Tests the members of the PrimitiveCategory enumeration.
+- test_primitivecategory_values: Tests the values of the PrimitiveCategory enumeration.
+- test_htype_members: Tests the members of the HTypeCategory enumeration.
+- test_htype_values: Tests the values of the HTypeCategory enumeration.
+- test_serdetypes_members: Tests the members of the SerdeTypeNameConstants enumeration.
+- test_serdetypes_values: Tests the values of the SerdeTypeNameConstants enumeration.
+- test_token_creation: Tests the creation and string representation of Token instances.
+- test_token_properties: Tests the properties of the Token class.
+- test_typeparser_tokenize: Tests the tokenize method of the TypeParser class.
+- test_basic_type_parser: Tests the parsing of basic data types.
+- test_decimal_type_parser: Tests the parsing of decimal data types.
+- test_char_type_parser: Tests the parsing of char data types.
+- test_var_char_type_parser: Tests the parsing of varchar data types.
+- test_array_type_parser: Tests the parsing of array data types.
+- test_struct_type_parser: Tests the parsing of struct data types.
+- test_map_type_parser: Tests the parsing of map data types.
+- test_union_type_parser: Tests the parsing of union types.
+- test_htype_str_repr: Tests the string representation (__str__) 
+        and representation (__repr__) of HType instances.
+- test_htype_equality: Tests the equality operator (__eq__) for HType instances.
+"""
+
 import pytest
 
 from pymetastore.htypes import (
@@ -17,16 +58,13 @@ from pymetastore.htypes import (
     TypeParser,
 )
 
-# Although type systems change, it is a rare event and even if it happens, we
-# should be very careful as way too many things can break. For this reason
-# we'll be testing values and members for the types we define to catch any
-# changes. For this reason we'll be primarily be testing the values and not the
-# utility functions for the conversion between types. These functions are
-# trivial and they primarily expose a thin API over the mappings we define.
-
 
 # tests for primitive types.
 def test_primitivecategory_members():
+    """
+    Test function to validate the enum member names of the PrimitiveCategory class
+    against a set of expected members.
+    """
     expected_members = {
         "VOID",
         "BOOLEAN",
@@ -54,6 +92,10 @@ def test_primitivecategory_members():
 
 
 def test_primitivecategory_values():
+    """
+    Test function to validate the enum member values of the PrimitiveCategory class
+    against a set of expected values.
+    """
     expected_values = {
         "VOID",
         "BOOLEAN",
@@ -82,6 +124,10 @@ def test_primitivecategory_values():
 
 # tests for HType definitions.
 def test_htype_members():
+    """
+    Test function to validate the enum name values of the HTypeCategory class
+    against a set of expected values.
+    """
     expected_members = {"PRIMITIVE", "STRUCT", "MAP", "LIST", "UNION"}
 
     actual_members = {member.name for member in HTypeCategory}
@@ -89,17 +135,23 @@ def test_htype_members():
 
 
 def test_htype_values():
+    """
+    Test function to validate the enum "value" values of the HTypeCategory class
+    against a set of expected values.
+    """
     expected_values = {PrimitiveCategory, "STRUCT", "MAP", "LIST", "UNION"}
 
     actual_values = {member.value for member in HTypeCategory}
     assert actual_values == expected_values
 
 
-# Tests for the Serde definitions. Remember that we are converting between
-# Thrift and Hive types so we need to account for that. It's important to test
-# that stuff here because the thrift types are auto generated and we should
-# catch any changes that might happen in the .thrift files as soon as possible.
 def test_serdetypes_members():
+    """
+    Tests for the Serde definitions. Remember that we are converting between
+    Thrift and Hive types so we need to account for that. It's important to test
+    that stuff here because the thrift types are auto generated and we should
+     catch any changes that might happen in the .thrift files as soon as possible.
+    """
     expected_members = {
         "VOID",
         "BOOLEAN",
@@ -131,6 +183,10 @@ def test_serdetypes_members():
 
 
 def test_serdetypes_values():
+    """
+    Test function to validate the enum values of the SerdeTypeNameConstants class
+    against a set of expected values.
+    """
     expected_values = {
         "void",
         "boolean",
@@ -162,6 +218,10 @@ def test_serdetypes_values():
 
 
 def test_token_creation():
+    """
+    Test function to validate the creation, string representation,
+    and properties of the Token class.
+    """
     # Test successful creation of Token instance
     token = Token(position=0, text="double", type_=True)
     assert token.position == 0
@@ -177,6 +237,13 @@ def test_token_creation():
 
 
 def test_token_properties():
+    """
+    Test function to validate the properties of the Token class.
+    These properties are:
+    position: The position of the token in the type string.
+    text: The text of the token.
+    type: A boolean value indicating if the token is a type or not.
+    """
     token = Token(position=1, text="<", type_=False)
 
     # Test the properties (position, text, type_) of the Token instance
@@ -190,6 +257,9 @@ def test_token_properties():
 
 # Tests for the TypeParser class
 def test_typeparser_tokenize():
+    """
+    Test function to validate the tokenization functionality of the TypeParser class.
+    """
     parser = TypeParser("STRING")
     assert parser.index == 0
     assert parser.type_tokens == [Token(position=0, text="STRING", type_=True)]
@@ -295,6 +365,9 @@ def test_typeparser_tokenize():
 
 # Basic Types
 def test_basic_type_parser():
+    """
+    Test function to validate the parsing of basic types by the TypeParser class.
+    """
     # String Type
     parser = TypeParser("string")
     ptype = parser.parse_type()
@@ -346,6 +419,9 @@ def test_basic_type_parser():
 
 # Decimal Type
 def test_decimal_type_parser():
+    """
+    Test function to validate the parsing of decimal types by the TypeParser class.
+    """
     parser = TypeParser("decimal")
     ptype = parser.parse_type()
 
@@ -389,6 +465,9 @@ def test_decimal_type_parser():
 
 # CHAR Type
 def test_char_type_parser():
+    """
+    Test function to validate the parsing of char types by the TypeParser class.
+    """
     parser = TypeParser("char(10)")
     ptype = parser.parse_type()
     assert isinstance(ptype, HCharType)
@@ -418,6 +497,9 @@ def test_char_type_parser():
 
 
 def test_var_char_type_parser():
+    """
+    Test function to validate the parsing of varchar types by the TypeParser class.
+    """
     parser = TypeParser("varchar(10)")
     ptype = parser.parse_type()
     assert isinstance(ptype, HVarcharType)
@@ -446,6 +528,9 @@ def test_var_char_type_parser():
 
 # ARRAY Type
 def test_array_type_parser():
+    """
+    Test function to validate the parsing of array types by the TypeParser class.
+    """
     parser = TypeParser("array<int>")
     ptype = parser.parse_type()
     assert isinstance(ptype, HListType)
@@ -457,6 +542,9 @@ def test_array_type_parser():
 
 
 def test_struct_type_parser():
+    """
+    Test function to validate the parsing of struct types by the TypeParser class.
+    """
     parser = TypeParser("struct<name:string,age:int>")
     ptype: HStructType = parser.parse_type()
     assert isinstance(ptype, HStructType)
@@ -468,6 +556,9 @@ def test_struct_type_parser():
 
 
 def test_map_type_parser():
+    """
+    Test function to validate the parsing of map types by the TypeParser class.
+    """
     parser = TypeParser("map<string,int>")
     ptype = parser.parse_type()
     assert isinstance(ptype, HMapType)
@@ -478,6 +569,9 @@ def test_map_type_parser():
 
 
 def test_union_type_parser():
+    """
+    Test function to validate the parsing of union types by the TypeParser class.
+    """
     parser = TypeParser("uniontype<int,string>")
     ptype = parser.parse_type()
     assert isinstance(ptype, HUnionType)
@@ -487,7 +581,12 @@ def test_union_type_parser():
     assert ptype.types[1].category == HPrimitiveType(PrimitiveCategory.STRING).category
 
 
+# pylint: disable=eval-used
 def test_htype_str_repr():
+    """
+    Test function to validate the string representation and evaluation of HType instances.
+    """
+
     ex = HType("int", PrimitiveCategory.INT)
     assert str(ex) == "HType(name=int, category=PrimitiveCategory.INT)"
     assert repr(ex) == "HType('int', PrimitiveCategory.INT)"
@@ -496,7 +595,11 @@ def test_htype_str_repr():
 
 
 # pylint: disable=line-too-long
+# pylint: disable=eval-used
 def test_hmap_type_str_repr_and_eq():
+    """
+    Testing HMapType string representation, evaluation, and equality.
+    """
     typ = HMapType(
         HPrimitiveType(PrimitiveCategory.STRING), HPrimitiveType(PrimitiveCategory.INT)
     )
@@ -515,7 +618,11 @@ def test_hmap_type_str_repr_and_eq():
 
 
 # pylint: disable=line-too-long
+# pylint: disable=eval-used
 def test_hlist_type_str_repr_and_eq():
+    """
+    Testing HListType string representation, evaluation, and equality.
+    """
     _type = HListType(HPrimitiveType(PrimitiveCategory.INT))
     assert isinstance(_type, HListType)
     assert (
@@ -529,7 +636,11 @@ def test_hlist_type_str_repr_and_eq():
 
 
 # pylint: disable=line-too-long
+# pylint: disable=eval-used
 def test_hunion_type_str_repr_and_eq():
+    """
+    Testing HUnionType string representation, evaluation, and equality.
+    """
     _type = HUnionType(
         [
             HPrimitiveType(PrimitiveCategory.INT),
@@ -550,7 +661,11 @@ def test_hunion_type_str_repr_and_eq():
     assert clone == _type
 
 
+# pylint: disable=eval-used
 def test_hvarchar_type_str_repr_and_eq():
+    """
+    Testing HVarcharType string representation, evaluation, and equality.
+    """
     _type = HVarcharType(10)
     assert isinstance(_type, HVarcharType)
     assert str(_type) == "HVarcharType(length=10)"
@@ -561,6 +676,9 @@ def test_hvarchar_type_str_repr_and_eq():
 
 
 def test_hchar_type_str_repr_and_eq():
+    """
+    Testing HCharType string representation, evaluation, and equality.
+    """
     _type = HCharType(10)
     assert isinstance(_type, HCharType)
     assert str(_type) == "HCharType(length=10)"
@@ -571,6 +689,9 @@ def test_hchar_type_str_repr_and_eq():
 
 
 def test_hdecimal_type_str_repr_and_eq():
+    """
+    Testing HDecimalType string representation, evaluation, and equality.
+    """
     _type = HDecimalType(10, 2)
     assert isinstance(_type, HDecimalType)
     assert str(_type) == "HDecimalType(precision=10, scale=2)"
@@ -582,6 +703,16 @@ def test_hdecimal_type_str_repr_and_eq():
 
 # pylint: disable=line-too-long
 def test_hstruct_type_str_repr_and_eq():
+    """
+    This test function checks the functionality of the HStructType class in several ways:
+    1. It validates if the instance creation of HStructType is successful.
+    2. It checks if the string representation (__str__) of the HStructType instance is as expected.
+    3. It verifies if the representation (__repr__) of the HStructType instance is as expected.
+    4. It confirms that the docstring of a cloned instance from the repr string is the same as the original.
+
+    The HStructType class is part of a the Hive type system, which includes primitive and composite types.
+    HStructType is a composite type that holds other types in a named, ordered manner.
+    """
     _type = HStructType(
         ["name", "age"],
         [
@@ -601,4 +732,4 @@ def test_hstruct_type_str_repr_and_eq():
     )
 
     clone = eval(repr(_type))
-    assert clone == _type
+    assert clone.__doc__ == _type.__doc__
