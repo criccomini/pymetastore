@@ -33,7 +33,7 @@ keywords = [
 ]
 
 [project.urls]
-repository = "https://github.com/recap-cloud/pymetastore"
+repository = "https://github.com/recap-build/pymetastore"
 
 [build-system]
 requires = ["pdm-backend"]
