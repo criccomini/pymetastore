@@ -13,7 +13,7 @@ jobs:
 
     services:
       hive-metastore:
-        image: ghcr.io/criccomini/hive-metastore-standalone:latest
+        image: ghcr.io/recap-build/hive-metastore-standalone:latest
         ports:
           - 9083:9083
 
