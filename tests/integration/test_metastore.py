@@ -355,7 +355,10 @@ def setup_data(hive_client):
         outputFormat="org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat",
         compressed=False,
         numBuckets=-1,
-        serdeInfo=None,  # Virtual views may have None serdeInfo
+        # Virtual views should have serdeInfo set to None on get(), but we set it to
+        # serde_info on pass because the .thrift spec doesn't allow serdeInfo to be
+        # None on write. Go figure. See #39 and #40.
+        serdeInfo=serde_info,
         bucketCols=[],
     )
 
