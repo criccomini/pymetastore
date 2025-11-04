@@ -343,6 +343,44 @@ def setup_data(hive_client):
     )
     hive_client.update_table_column_statistics(col_stats)
 
+    # Create a Hive VIRTUAL_VIEW with serdeInfo set to None
+    view_cols = [
+        ttypes.FieldSchema(name="view_col1", type="int", comment="view column 1"),
+        ttypes.FieldSchema(name="view_col2", type="string", comment="view column 2"),
+    ]
+
+    view_storage_desc = ttypes.StorageDescriptor(
+        cols=view_cols,
+        inputFormat="org.apache.hadoop.mapred.SequenceFileInputFormat",
+        outputFormat="org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat",
+        compressed=False,
+        numBuckets=-1,
+        # Virtual views should have serdeInfo set to None on get(), but we set it to
+        # serde_info on pass because the .thrift spec doesn't allow serdeInfo to be
+        # None on write. Go figure. See #39 and #40.
+        serdeInfo=serde_info,
+        bucketCols=[],
+    )
+
+    view_table = ttypes.Table(
+        tableName="test_view",
+        dbName="test_db",
+        owner="owner",
+        createTime=0,
+        lastAccessTime=0,
+        retention=0,
+        sd=view_storage_desc,
+        partitionKeys=[],
+        parameters={},
+        viewOriginalText="SELECT col1 AS view_col1, col2 AS view_col2 FROM test_table",
+        viewExpandedText="SELECT `test_table`.`col1` AS `view_col1`, `test_table`.`col2` AS `view_col2` FROM `test_db`.`test_table`",
+        tableType="VIRTUAL_VIEW",
+    )
+
+    if "test_view" in hive_client.get_all_tables("test_db"):
+        hive_client.drop_table("test_db", "test_view", True)
+    hive_client.create_table(view_table)
+
 
 # pylint: disable=redefined-outer-name
 def test_list_databases(hive_client):
@@ -918,3 +956,55 @@ def test_table_stats(hive_client):
     assert statistics[6].stats.highValue == 100
     assert statistics[6].stats.numNulls == 0
     assert statistics[6].stats.cardinality == 100
+
+
+# pylint: disable=redefined-outer-name
+def test_get_view(hive_client):
+    """
+    Test the functionality of retrieving a Hive VIRTUAL_VIEW.
+
+    This function retrieves the view "test_view" from the database "test_db" and
+    checks that the properties of the view match the expected values. This includes
+    checks on the view name, owner, columns, table type, and view text.
+
+    Args:
+        hive_client: A handle to the Hive metastore client.
+
+    Raises:
+        AssertionError: If the properties of the fetched view do not match the expected values.
+    """
+    hms = HMS(hive_client)
+    view = hms.get_table("test_db", "test_view")
+
+    assert isinstance(view, HTable)
+    assert view.database_name == "test_db"
+    assert view.name == "test_view"
+    assert view.owner == "owner"
+    assert view.table_type == "VIRTUAL_VIEW"
+
+    # Check columns
+    assert len(view.columns) == 2
+    assert isinstance(view.columns[0], HColumn)
+    assert view.columns[0].name == "view_col1"
+    assert isinstance(view.columns[0].type, HPrimitiveType)
+    assert view.columns[0].type.name == "INT"
+    assert view.columns[0].comment == "view column 1"
+
+    assert isinstance(view.columns[1], HColumn)
+    assert view.columns[1].name == "view_col2"
+    assert isinstance(view.columns[1].type, HPrimitiveType)
+    assert view.columns[1].type.name == "STRING"
+    assert view.columns[1].comment == "view column 2"
+
+    # Check that partition columns are empty for views
+    assert len(view.partition_columns) == 0
+
+    # Check view text
+    assert (
+        view.view_original_text
+        == "SELECT col1 AS view_col1, col2 AS view_col2 FROM test_table"
+    )
+    assert (
+        view.view_expanded_text
+        == "SELECT `test_table`.`col1` AS `view_col1`, `test_table`.`col2` AS `view_col2` FROM `test_db`.`test_table`"
+    )

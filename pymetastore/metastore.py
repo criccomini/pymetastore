@@ -93,7 +93,7 @@ class HiveBucketProperty:
 
 @dataclass
 class StorageFormat:
-    serde: str
+    serde: Optional[str]
     input_format: str
     output_format: str
 
@@ -446,6 +446,9 @@ class HMS:
                             raise TypeError(
                                 f"Expected serializationLib to be str, got {type(table.sd.serdeInfo.serializationLib)}"
                             )
+                    elif table.tableType == "VIRTUAL_VIEW":
+                        # See #39 and #40 for details
+                        serde = None
                     else:
                         raise TypeError(
                             f"Expected serdeInfo to be str, got {type(table.sd.serdeInfo)}"
