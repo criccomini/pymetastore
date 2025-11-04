@@ -93,7 +93,7 @@ class HiveBucketProperty:
 
 @dataclass
 class StorageFormat:
-    serde: str
+    serde: Optional[str]
     input_format: str
     output_format: str
 
