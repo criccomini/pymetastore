@@ -447,6 +447,7 @@ class HMS:
                                 f"Expected serializationLib to be str, got {type(table.sd.serdeInfo.serializationLib)}"
                             )
                     else:
+                        # See #39 and #40 for details
                         if table.tableType != "VIRTUAL_VIEW":
                             raise TypeError(
                                 f"Expected serdeInfo to be str, got {type(table.sd.serdeInfo)}"
