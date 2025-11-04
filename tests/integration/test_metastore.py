@@ -954,6 +954,7 @@ def test_table_stats(hive_client):
     assert statistics[6].stats.numNulls == 0
     assert statistics[6].stats.cardinality == 100
 
+
 # pylint: disable=redefined-outer-name
 def test_get_view(hive_client):
     """
@@ -971,13 +972,13 @@ def test_get_view(hive_client):
     """
     hms = HMS(hive_client)
     view = hms.get_table("test_db", "test_view")
-    
+
     assert isinstance(view, HTable)
     assert view.database_name == "test_db"
     assert view.name == "test_view"
     assert view.owner == "owner"
     assert view.table_type == "VIRTUAL_VIEW"
-    
+
     # Check columns
     assert len(view.columns) == 2
     assert isinstance(view.columns[0], HColumn)
@@ -985,16 +986,22 @@ def test_get_view(hive_client):
     assert isinstance(view.columns[0].type, HPrimitiveType)
     assert view.columns[0].type.name == "INT"
     assert view.columns[0].comment == "view column 1"
-    
+
     assert isinstance(view.columns[1], HColumn)
     assert view.columns[1].name == "view_col2"
     assert isinstance(view.columns[1].type, HPrimitiveType)
     assert view.columns[1].type.name == "STRING"
     assert view.columns[1].comment == "view column 2"
-    
+
     # Check that partition columns are empty for views
     assert len(view.partition_columns) == 0
-    
+
     # Check view text
-    assert view.view_original_text == "SELECT col1 AS view_col1, col2 AS view_col2 FROM test_table"
-    assert view.view_expanded_text == "SELECT `test_table`.`col1` AS `view_col1`, `test_table`.`col2` AS `view_col2` FROM `test_db`.`test_table`"
+    assert (
+        view.view_original_text
+        == "SELECT col1 AS view_col1, col2 AS view_col2 FROM test_table"
+    )
+    assert (
+        view.view_expanded_text
+        == "SELECT `test_table`.`col1` AS `view_col1`, `test_table`.`col2` AS `view_col2` FROM `test_db`.`test_table`"
+    )
