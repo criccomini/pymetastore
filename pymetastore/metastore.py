@@ -632,7 +632,7 @@ class HMS:
     def get_table_stats(
         self,
         table: HTable,
-        columns: List[HColumn] | None = None,
+        columns: Optional[List[HColumn]] = None,
     ) -> List[ColumnStats]:
         columns = columns or []
 
